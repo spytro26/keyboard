@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { InputField } from '@/components/InputField';
 import { useStorageContext } from '@/hooks/StorageProvider';
@@ -106,7 +108,18 @@ export default function MiscellaneousTab() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+      >
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Enzo Cool Calc</Text>
           <Text style={styles.subtitle}>Miscellaneous Loads & Equipment</Text>
@@ -255,6 +268,7 @@ export default function MiscellaneousTab() {
 
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

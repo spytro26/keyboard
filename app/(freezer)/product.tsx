@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { InputField } from '@/components/InputField';
 import { FreezerProductPicker } from '@/components/FreezerProductPicker';
@@ -74,7 +76,18 @@ export default function FreezerProductTab() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+      >
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Enzo Cool Calc</Text>
           <Text style={styles.subtitle}>Product Load & Freezing Process</Text>
@@ -182,6 +195,7 @@ export default function FreezerProductTab() {
           />
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -5,6 +5,8 @@ import {
     StyleSheet,
     ScrollView,
     SafeAreaView,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { InputField } from '@/components/InputField';
 import { InsulationTypePicker } from '@/components/InsulationTypePicker';
@@ -37,7 +39,18 @@ export default function BlastRoomDetailsTab() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+            >
+            <ScrollView
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                automaticallyAdjustKeyboardInsets={true}
+                contentContainerStyle={{ paddingBottom: 32 }}
+            >
                 <View style={styles.content}>
                     <View style={styles.header}>
                         <Text style={styles.title}>Enzo Cool Calc</Text>
@@ -197,6 +210,7 @@ export default function BlastRoomDetailsTab() {
                     </View>
                 </View>
             </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
