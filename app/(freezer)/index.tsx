@@ -77,9 +77,10 @@ export default function FreezerRoomDetailsTab() {
 
             <InputField
               label="Project Name"
-              value={roomData.projectName || 'Freezer Project'}
+              value={roomData.projectName ?? ''}
               onChangeText={(value) => updateRoomData('projectName', value)}
               placeholder="Freezer Project"
+              keyboardType="default"
             />
           </View>
 

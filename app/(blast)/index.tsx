@@ -62,9 +62,10 @@ export default function BlastRoomDetailsTab() {
 
                         <InputField
                             label="Project Name"
-                            value={roomData.projectName || 'Blaster Project'}
+                            value={roomData.projectName ?? ''}
                             onChangeText={(value) => handleStringChange('projectName', value)}
                             placeholder="Blaster Project"
+                            keyboardType="default"
                         />
                     </View>
 

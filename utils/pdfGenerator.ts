@@ -268,91 +268,118 @@ const generateHTMLContent = (
 ): string => {
   const isFreezerDoc = (data?.title || '').toLowerCase().includes('freezer');
 
-  // Create the dynamic header text for main results section
-  const mainResultsTitle = (() => {
-    if (data.userName && data.projectName) {
-      return `<div class="name-project-container">
-        <span class="user-name-section">Name: ${data.userName}</span>
-        <span class="project-name-section">Project: ${data.projectName}</span>
-      </div>`;
-    } else if (data.userName) {
-      return `<div class="name-project-container">
-        <span class="user-name-section">Name: ${data.userName}</span>
-      </div>`;
-    } else if (data.projectName) {
-      return `<div class="name-project-container">
-        <span class="project-name-section">Project: ${data.projectName}</span>
-      </div>`;
-    } else {
-      return 'KEY CALCULATION RESULTS'; // Fallback to original text
-    }
-  })();
-
-  // Create main results section if provided - redesigned
-  const mainResultsHTML = data.finalResults
-    ? `
-    <div class="main-results-section">
-      <h2 class="section-title-main">${mainResultsTitle}</h2>
-      <div class="main-results-grid ${
-        data.finalResults.length === 3 ? 'three-cols' : ''
-      }">
-        ${data.finalResults
-          .map(
-            (item) => `
-          <div class="main-result-card">
-            <div class="main-result-label">${item.label}</div>
-            <div class="main-result-value">${item.value} <span class="unit">${item.unit}</span></div>
-          </div>
-        `
-          )
-          .join('')}
-      </div>
-    </div>
-  `
-    : '';
-
-  // Create outputs section - redesigned
-  const outputsHTML =
-    data.sections.length > 0
+  const reportMetaHTML =
+    data.userName || data.projectName
       ? `
-    <div class="outputs-section">
-      <h2 class="section-title-main">DETAILED CALCULATIONS</h2>
-      <div class="tables-container">
-        ${data.sections
-          .map(
-            (section) => `
-          <div class="table-section">
-            <h3 class="table-header">${section.title}</h3>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Parameter</th>
-                  <th>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${section.items
-                  .map(
-                    (item) => `
-                  <tr class="${item.isHighlighted ? 'highlighted-row' : ''}">
-                    <td class="table-label">${item.label}</td>
-                    <td class="table-value">${item.value} ${item.unit}</td>
-                  </tr>
-                `
-                  )
-                  .join('')}
-              </tbody>
-            </table>
-          </div>
-        `
-          )
-          .join('')}
-      </div>
-    </div>
-  `
+        <div class="meta-row">
+          ${
+            data.userName
+              ? `<div class="meta-chip"><span class="meta-label">Name :</span><span class="meta-value">${data.userName}</span></div>`
+              : ''
+          }
+          ${
+            data.projectName
+              ? `<div class="meta-chip"><span class="meta-label">Project :</span><span class="meta-value">${data.projectName}</span></div>`
+              : ''
+          }
+        </div>`
       : '';
 
-  // Helper: merge Room Length/Width/Height into a single row in "Room Definition"
+  const summaryCardsHTML = data.finalResults
+    ? `
+        <div class="summary-card-row ${
+          data.finalResults.length === 3 ? 'summary-card-row--three' : ''
+        }">
+          ${data.finalResults
+            .map(
+              (item) => `
+            <div class="summary-card">
+              <div class="summary-card-label">${item.label}</div>
+              <div class="summary-card-value">
+                <span class="summary-value">${item.value}</span>
+                <span class="summary-unit">${item.unit}</span>
+              </div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `
+    : '';
+
+  const detailedSectionsHTML = (() => {
+    if (!data.sections || data.sections.length === 0) return '';
+
+    const titleOrderLeft = ['transmission', 'other'];
+    const titleOrderRight = ['product', 'heat'];
+
+    const findSection = (keyword: string) =>
+      data.sections.find((section) =>
+        (section.title || '').toLowerCase().includes(keyword)
+      );
+
+    const buildColumn = (keywords: string[]) =>
+      keywords
+        .map((keyword) => findSection(keyword))
+        .filter(Boolean) as typeof data.sections;
+
+    const leftColumn = buildColumn(titleOrderLeft);
+    const rightColumn = buildColumn(titleOrderRight);
+
+    const used = new Set([...leftColumn, ...rightColumn]);
+    const leftovers = data.sections.filter((section) => !used.has(section));
+
+    // distribute leftovers by shorter column to keep balance
+    leftovers.forEach((section) => {
+      const leftHeight = leftColumn.length;
+      const rightHeight = rightColumn.length;
+      if (leftHeight <= rightHeight) {
+        leftColumn.push(section);
+      } else {
+        rightColumn.push(section);
+      }
+    });
+
+    const renderInfoCard = (section: (typeof data.sections)[number]) => {
+      const rows = section.items
+        .map(
+          (item) => `
+            <tr class="${item.isHighlighted ? 'row-highlight' : ''}">
+              <td class="cell-label">${item.label}</td>
+              <td class="cell-value">${[item.value, item.unit]
+                .filter(Boolean)
+                .join(' ')}</td>
+            </tr>
+          `
+        )
+        .join('');
+
+      return `
+        <div class="info-card">
+          <div class="info-card-title">${section.title}</div>
+          <table class="info-table">
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    };
+
+    const renderColumn = (column: typeof data.sections) =>
+      column.map(renderInfoCard).join('');
+
+    return `
+      <div class="section-block">
+        <h2 class="section-heading">Detailed Calculations</h2>
+        <div class="detail-columns">
+          <div class="detail-column detail-column--left">
+            ${renderColumn(leftColumn)}
+          </div>
+          <div class="detail-column detail-column--right">
+            ${renderColumn(rightColumn)}
+          </div>
+        </div>
+      </div>`;
+  })();
+
   const normalizeRoomDefinitionInputs = (
     inputs: NonNullable<PDFData['inputs']>
   ): NonNullable<PDFData['inputs']> => {
@@ -383,18 +410,15 @@ const generateHTMLContent = (
           const filtered = items.filter(
             (it) => it !== len && it !== wid && it !== hgt
           );
-          section = { ...section, items: [combined, ...filtered] };
+          return { ...section, items: [combined, ...filtered] };
         }
         return section;
       });
     } catch {
-      return inputs; // fail safe: no mutation
+      return inputs;
     }
   };
 
-  // Create inputs section - redesigned (two-column flow). We also add a slug class
-  // on each input section so iOS can position them into fixed left/right columns
-  // to match Android's visual grouping.
   const normalizedInputs = data.inputs
     ? normalizeRoomDefinitionInputs(data.inputs)
     : null;
@@ -403,136 +427,98 @@ const generateHTMLContent = (
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
-  // Helper to render a section table
+
   const renderSection = (
     inputSection: NonNullable<PDFData['inputs']>[number]
   ) => `
-    <div class="input-section input-section--${slugify(inputSection.title)}">
-      <div class="table-section">
-        <h3 class="table-header">${inputSection.title}</h3>
-        <table class="data-table">
-          <thead>
-            <tr><th>Parameter</th><th>Value</th></tr>
-          </thead>
-          <tbody>
-            ${(inputSection.items || [])
-              .map(
-                (item) => `
-              <tr>
-                <td class="table-label">${item.label ?? ''}</td>
-                <td class="table-value">${[item.value, item.unit]
-                  .filter(Boolean)
-                  .join(' ')}</td>
-              </tr>
-            `
-              )
-              .join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-
-  // Build Inputs HTML. On iOS, use two fixed flex columns to eliminate tall-row gaps.
-  let inputsHTML = '';
-  if (normalizedInputs) {
-    if (isIOS) {
-      const findTitle = (kw: string) =>
-        normalizedInputs.find((s) =>
-          (s.title || '').toLowerCase().includes(kw)
-        );
-      const ambient = findTitle('ambient');
-      const product = findTitle('product');
-      const room = findTitle('room');
-      const internal = findTitle('internal');
-      const others = normalizedInputs.filter(
-        (s) => s !== ambient && s !== product && s !== room && s !== internal
-      );
-
-      inputsHTML = `
-        <div class="inputs-section">
-          <h2 class="section-title-main">INPUT PARAMETERS</h2>
-          <div class="inputs-two-col">
-            <div class="col left">
-              ${(
-                [ambient, product].filter(Boolean) as NonNullable<
-                  PDFData['inputs']
-                >[number][]
-              )
-                .map(renderSection)
+        <div class="info-card input-card input-card--${slugify(
+          inputSection.title
+        )}">
+          <div class="info-card-title">${inputSection.title}</div>
+          <table class="info-table">
+            <tbody>
+              ${(inputSection.items || [])
+                .map(
+                  (item) => `
+                <tr>
+                  <td class="cell-label">${item.label ?? ''}</td>
+                  <td class="cell-value">${[item.value, item.unit]
+                    .filter(Boolean)
+                    .join(' ')}</td>
+                </tr>
+              `
+                )
                 .join('')}
-              ${others
-                .filter((s) => (s.title || '').toLowerCase().includes('left'))
-                .map(renderSection)
-                .join('')}
-            </div>
-            <div class="col right">
-              ${(
-                [room, internal].filter(Boolean) as NonNullable<
-                  PDFData['inputs']
-                >[number][]
-              )
-                .map(renderSection)
-                .join('')}
-              ${others
-                .filter((s) => !(s.title || '').toLowerCase().includes('left'))
-                .map(renderSection)
-                .join('')}
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>`;
-    } else {
-      inputsHTML = `
-        <div class="inputs-section">
-          <h2 class="section-title-main">INPUT PARAMETERS</h2>
-          <div class="input-columns">
-            ${normalizedInputs.map(renderSection).join('')}
-          </div>
-        </div>`;
-    }
-  }
 
-  // iOS-specific CSS tweaks: avoid transform scaling (blurs text) and
-  // instead tighten spacing and use a deterministic grid for inputs.
-  // Also reduce margins slightly and fonts just a bit to guarantee
-  // single-page fit, matching Android layout closely.
+  const orderByTitle = (
+    list: NonNullable<PDFData['inputs']>,
+    titles: string[]
+  ) =>
+    titles
+      .map((key) =>
+        list.find((section) =>
+          (section.title || '').toLowerCase().includes(key)
+        )
+      )
+      .filter(Boolean) as NonNullable<PDFData['inputs']>;
+
+  const remainingSections = (
+    list: NonNullable<PDFData['inputs']>,
+    picked: Set<NonNullable<PDFData['inputs']>[number]>
+  ) => list.filter((section) => !picked.has(section));
+
+  const inputsHTML = (() => {
+    if (!normalizedInputs || normalizedInputs.length === 0) return '';
+
+    const lowerOrder = ['ambient', 'product', 'room', 'internal'];
+    const ordered = orderByTitle(normalizedInputs, lowerOrder);
+    const pickedSet = new Set(ordered);
+    const leftovers = remainingSections(normalizedInputs, pickedSet);
+
+    const leftColumn = [
+      ordered.find((s) => (s.title || '').toLowerCase().includes('ambient')),
+      ordered.find((s) => (s.title || '').toLowerCase().includes('product')),
+      ...leftovers.filter((s) =>
+        (s.title || '').toLowerCase().includes('left')
+      ),
+    ].filter(Boolean) as NonNullable<PDFData['inputs']>;
+
+    const rightColumn = [
+      ordered.find((s) => (s.title || '').toLowerCase().includes('room')),
+      ordered.find((s) => (s.title || '').toLowerCase().includes('internal')),
+      ...leftovers.filter(
+        (s) => !(s.title || '').toLowerCase().includes('left')
+      ),
+    ].filter(Boolean) as NonNullable<PDFData['inputs']>;
+
+    return `
+      <div class="section-block">
+        <h2 class="section-heading">Input Parameters</h2>
+        <div class="input-columns">
+          <div class="input-column input-column--left">
+            ${leftColumn.map(renderSection).join('')}
+          </div>
+          <div class="input-column input-column--right">
+            ${rightColumn.map(renderSection).join('')}
+          </div>
+        </div>
+      </div>`;
+  })();
+
   const iosOnlyStyles = isIOS
     ? `
-      /* iOS: preserve Android colors & spacing, just fit-to-page */
       @page { margin: 8mm; }
       * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body { -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; padding-bottom: 4px; overflow: hidden; }
-      .header-logo { margin-top: 10px; }
-      /* Keep sections intact on a single page */
-      .table-section, .input-section { page-break-inside: avoid; break-inside: avoid; -webkit-column-break-inside: avoid; }
-      /* Apply a subtle pre-layout zoom to fit to one page without changing visual spacing */
-      .ios-fit { zoom: 0.955; }
-      /* Freezer report tends to be taller; compact it slightly more without affecting others */
-      .ios-fit.ios-fit--freezer { zoom: 0.935; }
-      /* Inputs: emulate Android's 2-column layout precisely */
-      .input-columns { column-count: initial; column-gap: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; grid-auto-flow: column; }
-      /* Place Ambient Conditions & Product Definition on the left column, others on right */
-      .input-section--ambient-conditions { grid-column: 1; order: 1; }
-      .input-section--product-definition { grid-column: 1; order: 2; }
-      .input-section--room-definition { grid-column: 2; order: 1; }
-      .input-section--internal-factors { grid-column: 2; order: 2; }
-      /* Two fixed columns layout to remove large vertical gaps */
-      .inputs-two-col { display: flex; gap: 10px; align-items: stretch; }
-      .inputs-two-col .col { flex: 1 1 0; display: flex; flex-direction: column; gap: 10px; }
-      .inputs-two-col .col .table-section { height: auto; }
-      /* Slightly tighter spacing for freezer to avoid 2nd page */
-      .ios-fit.ios-fit--freezer .tables-container { gap: 6px; }
-      .ios-fit.ios-fit--freezer .section-title-main { margin: 0 -5px 6px -5px; padding: 6px 16px; min-height: 26px; }
-      .ios-fit.ios-fit--freezer .name-project-container .user-name-section { margin-left: 6px; font-size: 10px; }
-      .ios-fit.ios-fit--freezer .name-project-container .project-name-section { margin-right: 6px; font-size: 10px; }
-      .ios-fit.ios-fit--freezer .main-results-grid { margin-bottom: 8px; }
-      .ios-fit.ios-fit--freezer .table-header { padding: 5px 8px; }
-      .ios-fit.ios-fit--freezer .data-table { font-size: 6.8px; }
-      .ios-fit.ios-fit--freezer .inputs-two-col .col { gap: 8px; }
-      /* Footer: place directly after content with a tiny margin to avoid second page */
-      .footer { position: static; bottom: auto; margin-top: 5mm; padding-top: 6px; }
-      /* Watermark: reduce size and switch to absolute to avoid creating extra page */
-      .watermark { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); opacity: 0.2; }
-      .watermark img { width: 280px; height: 280px; }
+      .ios-fit { zoom: 0.9; }
+      .ios-fit.ios-fit--freezer { zoom: 0.88; }
+      .info-card, .summary-card, .meta-row { page-break-inside: avoid; break-inside: avoid; }
+      .footer { position: static; bottom: auto; margin-top: 4mm; padding-top: 6px; }
+      .watermark { position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); opacity: 0.1; }
+      .watermark img { width: 220px; height: 220px; }
     `
     : '';
 
@@ -543,417 +529,387 @@ const generateHTMLContent = (
       <meta charset="utf-8">
       <title>${data.title}</title>
       <style>
-        * { 
-          margin: 0; 
-          padding: 0; 
-          box-sizing: border-box; 
+        :root {
+          --primary-blue: #0294cf;
+          --accent-gold: #fabe23;
+          --value-color: #1e1e1e;
+          --label-color: #1e1e1e;
+          --table-border: #0294cf;
+          --body-bg: #edf0f5;
         }
-        
-        @page { 
-          size: A4; 
-          margin: 8mm; 
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
-        
+
+        @page {
+          size: A4;
+          margin: 8mm;
+        }
+
         body {
           font-family: 'Arial', 'Helvetica', sans-serif;
           line-height: 1.2;
-          color: #333;
-          background: #ffffff;
-          font-size: 9px;
+          color: var(--value-color);
+          background: var(--body-bg);
+          font-size: 8.5px;
           height: ${isIOS ? 'auto' : '100vh'};
           position: relative;
           max-height: ${isIOS ? 'none' : '285mm'};
-          padding-bottom: ${isIOS ? '12px' : '45px'};
+          padding-bottom: ${isIOS ? '12px' : '38px'};
           overflow: hidden;
         }
-        
-        /* Watermark */
+
         .watermark {
           position: ${isIOS ? 'absolute' : 'fixed'};
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%) rotate(-45deg);
           z-index: -1;
-          opacity: ${isIOS ? '0.2' : '0.25'};
+          opacity: ${isIOS ? '0.12' : '0.16'};
           pointer-events: none;
         }
-        
+
         .watermark img {
-          width: ${isIOS ? '280px' : '350px'};
-          height: ${isIOS ? '280px' : '350px'};
+          width: ${isIOS ? '240px' : '320px'};
+          height: ${isIOS ? '240px' : '320px'};
           object-fit: contain;
         }
-        
-        /* Header Section - Professional Blue Design */
-        .header {
-          background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-          color: white;
-          padding: 20px 25px;
-          margin: -8mm -8mm 12px -8mm;
+
+        .report-wrapper {
+          margin: 0 auto;
+          background: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+          overflow: hidden;
+        }
+
+        .summary-banner {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          border-bottom: 4px solid #fbbf24;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          min-height: 80px;
+          padding: 16px 24px;
+          background: var(--primary-blue);
+          color: #ffffff;
         }
-        
-        .header-left {
+
+        .summary-left {
           display: flex;
           align-items: center;
-          gap: 20px;
-          margin-left: 15px;
+          gap: 18px;
         }
-        
-        .header-logo {
-          width: 55px;
-          height: 55px;
-          background: white;
-          border-radius: 8px;
-          padding: 6px;
+
+        .logo-box {
+          width: 54px;
+          height: 54px;
+          border-radius: 10px;
+          background: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-          margin-top: 5px;
+          border: none;
         }
-        
-        .header-logo img {
-          width: 100%;
-          height: 100%;
+
+        .logo-box img {
+          width: 42px;
+          height: 42px;
           object-fit: contain;
         }
-        
-        .header-title {
+
+        .brand-block {
           display: flex;
           flex-direction: column;
           gap: 3px;
-          margin-top: 8px;
         }
-        
-        .company-name {
-          font-size: 24px;
-          font-weight: bold;
+
+        .brand-title {
+          font-size: 22px;
           letter-spacing: 1px;
-          text-transform: uppercase;
+          font-weight: 700;
         }
-        
-        .product-name {
-          font-size: 15px;
-          font-weight: 300;
-          opacity: 0.9;
-          letter-spacing: 0.5px;
-        }
-        
-        .header-right {
-          text-align: right;
-          margin-top: 8px;
-          margin-right: 15px;
-        }
-        
-        .document-id {
-          font-size: 11px;
-          font-weight: bold;
-          background: rgba(255,255,255,0.2);
-          padding: 4px 8px;
-          border-radius: 4px;
-          margin-bottom: 5px;
-        }
-        
-        .date {
+
+        .brand-subtitle {
           font-size: 10px;
-          opacity: 0.8;
-          padding-right: 5px;
-        }
-        
-        /* Document Title */
-        .document-title {
-          text-align: center;
-          font-size: 14px;
-          font-weight: bold;
-          color: #1e3a8a;
-          margin: 15px 0;
           text-transform: uppercase;
-          letter-spacing: 1px;
-          border-bottom: 2px solid #e5e7eb;
-          padding-bottom: 8px;
+          letter-spacing: 0.8px;
+          opacity: 0.9;
         }
-        
-        /* Main Results Section */
-        .main-results-section {
-          margin-bottom: 15px;
-        }
-        
-        .section-title-main {
-          background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-          color: white;
-          padding: 8px 20px;
-          margin: 0 -5px 12px -5px;
-          font-size: 11px;
-          font-weight: bold;
-          text-transform: uppercase;
+
+        .summary-right {
+          text-align: right;
+          font-size: 10px;
+          font-weight: 600;
           letter-spacing: 0.5px;
-          border-radius: 4px;
-          min-height: 32px;
-          display: flex;
-          align-items: center;
         }
-        
-        /* Name and Project container - uses full width of blue section */
-        .name-project-container {
+
+        .divider {
+          height: 4px;
+          background: var(--accent-gold);
+        }
+
+        .report-title-bar {
+          background: #e9edf2;
+          color: var(--primary-blue);
+          text-align: center;
+          padding: 9px 18px;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          border-bottom: 1px solid #d3d8df;
+        }
+
+        .meta-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          width: 100%;
-          padding: 0;
+          gap: 16px;
+          padding: 8px 24px;
+          background: var(--primary-blue);
+          flex-wrap: wrap;
         }
-        
-        .user-name-section {
-          margin-left: 8px;
-          font-size: 11px;
-          font-weight: bold;
-          letter-spacing: 0.5px;
+
+        .meta-chip {
+          display: flex;
+          gap: 6px;
+          font-size: 10px;
+          font-weight: 600;
+          color: #ffffff;
+          letter-spacing: 0.7px;
+          text-transform: uppercase;
         }
-        
-        .project-name-section {
-          margin-right: 8px;
-          font-size: 11px;
-          font-weight: bold;
-          letter-spacing: 0.5px;
+
+        .meta-label,
+        .meta-value {
+          font-weight: 700;
         }
-        
-        .main-results-grid {
+
+        .report-content {
+          padding: 14px 22px 16px;
+          background: #ffffff;
+        }
+
+        .summary-card-row {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
           gap: 12px;
-          margin-bottom: 15px;
+          margin-bottom: 14px;
         }
-        /* Force 3 columns when exactly three final results are present, with safe right padding */
-        .main-results-grid.three-cols {
+
+        .summary-card-row--three {
           grid-template-columns: repeat(3, 1fr);
-          padding-right: 8px; /* avoid right-edge clipping on Android/iOS */
-        }
-        
-        .main-result-card {
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-          border: 2px solid #3b82f6;
-          border-radius: 8px;
-          padding: 15px;
-          text-align: center;
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-        }
-        
-        .main-result-label {
-          font-size: 10px;
-          font-weight: bold;
-          color: #1e3a8a;
-          margin-bottom: 8px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        
-        .main-result-value {
-          font-size: 18px;
-          font-weight: bold;
-          color: #1e40af;
-        }
-        
-        .unit {
-          font-size: 12px;
-          font-weight: normal;
-          color: #64748b;
-        }
-        
-        /* Tables Section */
-        .outputs-section, .inputs-section {
-          margin-bottom: 20px;
-        }
-        
-        /* Inputs as two-column flow to remove vertical gaps between sections */
-        .input-columns {
-          column-count: 2;
-          column-gap: 12px;
-          width: 100%;
         }
 
-        .input-section {
-          break-inside: avoid;
-          -webkit-column-break-inside: avoid;
-          display: inline-block;
-          width: 100%;
-          margin: 0 0 12px 0;
-        }
-
-        .tables-container {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-          gap: 12px;
-          margin-bottom: 35px;
-        }
-        
-        .tables-container.reduced-gap {
-          gap: 3px;
-        }
-        
-        .table-section {
+        .summary-card {
           background: #ffffff;
-          border: 1px solid #e5e7eb;
-          border-radius: 6px;
-          overflow: hidden;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          max-height: fit-content;
+          border: 1px solid var(--primary-blue);
+          border-radius: 10px;
+          padding: 14px 10px;
+          box-shadow: none;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          align-items: center;
+          text-align: center;
         }
-        
-        .table-header {
-          background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
-          color: white;
-          padding: 6px 10px;
-          font-size: 9px;
-          font-weight: bold;
+
+        .summary-card-label {
+          font-size: 10px;
+          font-weight: 700;
+          color: var(--primary-blue);
+          letter-spacing: 0.6px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
         }
-        
-        .data-table {
+
+        .summary-card-value {
+          display: flex;
+          align-items: baseline;
+          justify-content: center;
+          gap: 4px;
+        }
+
+        .summary-value {
+          font-size: 18px;
+          font-weight: 800;
+          color: var(--value-color);
+        }
+
+        .summary-unit {
+          font-size: 10px;
+          font-weight: 600;
+          color: var(--value-color);
+        }
+
+        .section-block {
+          margin-bottom: 16px;
+        }
+
+        .section-heading {
+          background: var(--primary-blue);
+          color: #ffffff;
+          padding: 6px 12px;
+          font-size: 10px;
+          text-transform: uppercase;
+          font-weight: 700;
+          border-radius: 6px 6px 0 0;
+          letter-spacing: 0.7px;
+        }
+
+        .input-columns,
+        .detail-columns {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          background: #ffffff;
+          border: 1px solid var(--table-border);
+          border-top: none;
+          padding: 12px;
+          border-radius: 0 0 10px 10px;
+        }
+
+        .input-column,
+        .detail-column {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .info-card {
+          border: 1px solid var(--table-border);
+          border-radius: 8px;
+          overflow: hidden;
+          background: #ffffff;
+          box-shadow: none;
+        }
+
+        .info-card + .info-card {
+          margin-top: 0;
+        }
+
+        .info-card-title {
+          background: var(--primary-blue);
+          color: #ffffff;
+          font-weight: 700;
+          font-size: 9.5px;
+          letter-spacing: 0.6px;
+          text-transform: uppercase;
+          padding: 7px 12px;
+        }
+
+        .info-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 7px;
+          border: 1px solid var(--table-border);
         }
-        
-        .data-table thead th {
-          background: #f8fafc;
-          color: #374151;
-          padding: 4px 6px;
-          font-weight: bold;
-          font-size: 7px;
-          text-transform: uppercase;
-          border-bottom: 2px solid #e5e7eb;
+
+        .info-table td {
+          border: 1px solid var(--table-border);
         }
-        
-        .data-table tbody tr {
-          border-bottom: 1px solid #f1f5f9;
+
+        .cell-label {
+          padding: 5px 8px;
+          font-weight: 600;
+          color: var(--label-color);
         }
-        
-        .data-table tbody tr:hover {
-          background: #f8fafc;
-        }
-        
-        .data-table tbody tr:nth-child(even) {
-          background: #fafbfc;
-        }
-        
-        .table-label {
-          padding: 4px 6px;
-          font-weight: 500;
-          color: #374151;
-          border-right: 1px solid #f1f5f9;
-        }
-        
-        .table-value {
-          padding: 4px 6px;
-          font-weight: bold;
-          color: #1e40af;
+
+        .cell-value {
+          padding: 5px 8px;
           text-align: right;
+          font-weight: 700;
+          color: var(--value-color);
+          letter-spacing: 0.2px;
         }
-        
-        .highlighted-row {
-          background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
-          font-weight: bold;
+
+        .row-highlight {
+          background: #eff8fe !important;
         }
-        
-        .highlighted-row .table-label {
-          color: #1e40af;
-          font-weight: bold;
+
+        .row-highlight .cell-label {
+          color: var(--primary-blue);
         }
-        
-        .highlighted-row .table-value {
-          color: #1d4ed8;
-          font-weight: bold;
+
+        .row-highlight .cell-value {
+          color: var(--primary-blue);
         }
-        
-        /* Footer */
+
         .footer {
           position: fixed;
           bottom: 3mm;
           left: 8mm;
           right: 8mm;
           text-align: center;
-          font-size: 10px;
-          color: #64748b;
-          border-top: 2px solid #e5e7eb;
-          padding-top: 10px;
-          background: white;
-          z-index: 100;
-          box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+          font-size: 8.5px;
+          color: rgba(30, 30, 30, 0.75);
+          border-top: 1px solid #cfd5dc;
+          padding-top: 6px;
+          background: rgba(255, 255, 255, 0.95);
+          letter-spacing: 0.4px;
         }
-        
+
         .footer-brand {
-          font-weight: bold;
-          color: #1e40af;
+          font-weight: 700;
+          color: var(--primary-blue);
         }
       ${iosOnlyStyles}
       </style>
     </head>
     <body>
-  ${
-    isIOS
-      ? `<div class="ios-fit ${isFreezerDoc ? 'ios-fit--freezer' : ''}">`
-      : ''
-  }
-      <!-- Watermark -->
+      ${
+        isIOS
+          ? `<div class="ios-fit ${isFreezerDoc ? 'ios-fit--freezer' : ''}">`
+          : ''
+      }
       ${
         watermarkBase64
           ? `
-      <div class="watermark">
-        <img src="${watermarkBase64}" alt="Watermark" />
-      </div>
-      `
+        <div class="watermark">
+          <img src="${watermarkBase64}" alt="Watermark" />
+        </div>`
           : ''
       }
-      
-      <!-- Header -->
-      <div class="header">
-        <div class="header-left">
-          <div class="header-logo">
-            ${
-              logoBase64
-                ? `<img src="${logoBase64}" alt="Logo" />`
-                : '<div style="color: #1e40af; font-weight: bold; font-size: 16px;">E</div>'
+      <div class="report-wrapper">
+        <div class="summary-banner">
+          <div class="summary-left">
+            <div class="logo-box">
+              ${
+                logoBase64
+                  ? `<img src="${logoBase64}" alt="Logo" />`
+                  : '<div style="color:#ffffff;font-weight:700;font-size:18px;letter-spacing:1px;">E</div>'
+              }
+            </div>
+            <div class="brand-block">
+              <div class="brand-title">COOLCALC</div>
+              <div class="brand-subtitle">Heat Load Calculation Report</div>
+            </div>
+          </div>
+          <div class="summary-right">Date : ${new Date().toLocaleDateString(
+            'en-GB',
+            {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
             }
-          </div>
-          <div class="header-title">
-            <div class="company-name">CoolCalc</div>
-            <div class="product-name">Heat Load Calculation Report</div>
-          </div>
+          )}</div>
         </div>
-        <div class="header-right">
-          <div class="date">Date: ${new Date().toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          })}</div>
+        <div class="divider"></div>
+        <div class="report-title-bar">${data.title}</div>
+        ${reportMetaHTML}
+        <div class="report-content">
+          ${summaryCardsHTML}
+          ${inputsHTML}
+          ${detailedSectionsHTML}
         </div>
       </div>
-      
-      <!-- Document Title -->
-      <div class="document-title">${data.title}</div>
-      
-      <!-- Main Content -->
-      ${mainResultsHTML}
-      ${outputsHTML}
-      ${inputsHTML}
-      
-      <!-- Footer (Android and other platforms only) -->
       ${
         !isIOS
           ? `
-      <div class="footer">
-        <div class="footer-brand">Powered by Enzo CoolCalc</div>
-      </div>
-      `
+        <div class="footer">
+          <div class="footer-brand">Powered by Enzo CoolCalc</div>
+        </div>`
           : ''
       }
-
       ${logoStatus ? `<!-- Debug: ${logoStatus} -->` : ''}
       ${isIOS ? '</div>' : ''}
     </body>

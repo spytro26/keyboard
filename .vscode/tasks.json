@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "TypeScript check",
+			"type": "shell",
+			"command": "npm run -s typecheck || npm run -s tsc --noEmit",
+			"group": "build"
+		}
+	]
+}

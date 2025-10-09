@@ -82,11 +82,17 @@ export const InputField: React.FC<InputFieldProps> = ({
           }}
           onBlur={() => {
             setIsFocused(false);
-            // On blur, if the text is a valid number propagate, else fallback to 0 or keep as-is if empty
-            if (fullDecimalRegex.test(localText)) {
+            // Apply numeric cleanup only for numeric keypads
+            if (keyboardType === 'decimal-pad' || keyboardType === 'numeric') {
+              // On blur, if the text is a valid number propagate, else fallback to 0 or keep as-is if empty
+              if (fullDecimalRegex.test(localText)) {
+                onChangeText(localText);
+              } else if (localText === '' || localText === '.' || localText === '-') {
+                onChangeText('0');
+              }
+            } else {
+              // For text inputs, just propagate whatever text is present (including empty)
               onChangeText(localText);
-            } else if (localText === '' || localText === '.' || localText === '-') {
-              onChangeText('0');
             }
           }}
           placeholderTextColor="#64748b"
