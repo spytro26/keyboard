@@ -103,6 +103,7 @@ export interface BlastMiscellaneousData {
 
     // Unit preferences
     volumeUnit: 'm³' | 'ft³';         // Volume unit preference
+    capacityIncludingSafety: number;  // Safety factor percentage
 }
 
 // Default values based on Excel spreadsheet for blast freezer - EXACT MATCH
@@ -201,6 +202,7 @@ const defaultBlastMiscData: BlastMiscellaneousData = {
 
     // Unit preferences
     volumeUnit: 'm³',
+    capacityIncludingSafety: 20,
 };
 
 export interface BlastCalculationResults {
@@ -249,7 +251,8 @@ export interface BlastCalculationResults {
     totalLoadKJ: number;           // Excel G36: =SUM(G8:G34)
     totalLoadKw: number;           // Excel G37: =G36/(3600*D46)
     totalLoadTR: number;           // Excel G38: =G37/3.517
-    capacityIncludingSafety: number; // Excel G39: =G38*(100+D39)/100 (20% safety factor)
+    capacityIncludingSafety: number; // Excel G39: TR with safety factor applied
+    safetyFactorPercent: number;  // User-defined safety factor percentage
     sensibleHeatKJ24Hr: number;    // Excel G40: =SUM(G8:G14)+SUM(G16:G17)+0.4*C
     latentHeatKJ24Hr: number;      // Excel G41: =G15+0.6*G20+0.6*G25
     shr: number;                   // Excel G42: =G40/(G40+G41)

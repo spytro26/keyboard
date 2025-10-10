@@ -134,7 +134,7 @@ export default function SignInScreen() {
                 >
                     <View style={styles.logoContainer}>
                         <Image 
-                            source={require('@/assets/images/logo.png')} 
+                            source={require('@/assets/images/output_450x255.jpg')} 
                             style={styles.logo}
                             resizeMode="contain"
                         />
@@ -207,21 +207,27 @@ const styles = StyleSheet.create({
     },
     logoContainer: { 
         alignItems: 'center', 
-        marginBottom: 24,
-        paddingVertical: 20,
+        marginBottom: 30,
+        paddingVertical: 26,
     },
     logo: { 
-        width: Math.min(width * 0.15, 80), 
-        height: Math.min(width * 0.15, 80), 
-        marginBottom: 8,
+        width: Math.min(width * 0.66, 264), 
+        height: Math.min(width * 0.66 * (255 / 450), 150), 
+        maxWidth: 264,
+        maxHeight: 150,
+        marginBottom: 14,
+        borderRadius: 16,
+        overflow: 'hidden',
     },
     appName: { 
-        fontSize: Math.min(width * 0.06, 24), 
+        fontSize: Math.min(width * 0.088, 33), 
         fontWeight: '900', 
-        color: '#000000', 
+        color: '#0f172a', 
+        letterSpacing: 0.55,
+        textTransform: 'uppercase',
     },
-    title: { fontSize: 24, fontWeight: '800', marginBottom: 12, textAlign: 'center', color: '#111827' },
-    subtitle: { fontSize: 14, color: '#6b7280', textAlign: 'center', marginBottom: 10 },
+    title: { fontSize: 26, fontWeight: '800', marginBottom: 14, textAlign: 'center', color: '#111827' },
+    subtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', marginBottom: 12 },
     input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 12, marginBottom: 12 },
     button: { backgroundColor: '#2563eb', padding: 14, borderRadius: 10, alignItems: 'center' },
     buttonDisabled: { opacity: 0.7 },

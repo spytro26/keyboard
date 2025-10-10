@@ -65,25 +65,31 @@ export interface FreezerMiscellaneousData extends MiscellaneousData {
   productOutgoingFreezer?: number; // Final temperature after freezing
   dailyLoading: number; // Excel shows daily loading in kg/day
 
-  // Additional Excel parameters for blast freezer
-  fanMotorRating: number; // kW per fan (override to required)
-  fanQuantity: number; // Number of fans (override to required)
+  // Additional operational parameters
+  equipmentPower?: number; // Total equipment power in Watts
   fanUsageHours: number; // Hours of fan usage (override to required)
   numberOfPeople?: number; // Excel shows 4 people
   peopleUsageFactor?: number; // Excel shows 0.407 kW heat equiv
   lightPowerKw?: number; // kW lighting power
-  lightUsageHours?: number; // Hours of lighting usage
-
-  // Door Clear Opening - Excel values
-  doorClearOpeningWidth: number; // mm width (override to required)
-  doorClearOpeningHeight: number; // mm height (override to required)
-  doorDimensionUnit: 'mm' | 'm'; // Unit for door dimensions
+  cpAboveFreezingMisc?: number;
+  pullDownTime?: number;
+  airFlowPerFan?: number;
+  doorClearOpening?: number;
+  storageCapacity?: number;
+  maximumStorage?: number;
+  peripheralHeaters?: number;
+  peripheralHeatersQuantity?: number;
+  doorHeaters?: number;
+  doorHeatersQuantity?: number;
+  trayHeaters?: number;
+  trayHeatersQuantity?: number;
+  drainHeaters?: number;
+  drainHeatersQuantity?: number;
 
   // Heater specifications from Excel
   peripheralHeaterPower?: number; // kW per heater
   peripheralHeaterQuantity?: number; // Number of peripheral heaters
   doorHeaterPower?: number; // kW per door heater
-  doorHeaterQuantity?: number; // Number of door heaters
   trayHeaterPower?: number; // kW per tray heater
   trayHeaterQuantity?: number; // Number of tray heaters
   drainHeaterPower?: number; // kW per drain heater
@@ -100,6 +106,7 @@ export interface MiscellaneousData {
   fanMotorRating: number; // C25 in Excel (0.25 kW)
   fanQuantity: number; // D25 in Excel (1)
   equipmentUsageHours: number; // F25 in Excel (20 hrs)
+  equipmentQuantity?: number; // Optional equipment count for miscellaneous calculators
 
   // Occupancy (Excel structure)
   occupancyCount: number; // C27 in Excel (1.0 people)
@@ -114,6 +121,14 @@ export interface MiscellaneousData {
   doorHeaterCapacity: number; // C33 in Excel (calculated from door perimeter)
   doorHeaterQuantity: number; // D33 in Excel (1)
   doorHeaterUsageHours: number; // F33 in Excel (20 hrs)
+  peripheralHeaters?: number;
+  peripheralHeatersQuantity?: number;
+  doorHeaters?: number;
+  doorHeatersQuantity?: number;
+  trayHeaters?: number;
+  trayHeatersQuantity?: number;
+  drainHeaters?: number;
+  drainHeatersQuantity?: number;
 
   // Temperature parameters (Excel structure)
   ambientTemp: number; // D55 in Excel (45°C)
@@ -126,7 +141,7 @@ export interface MiscellaneousData {
   doorClearOpeningWidth: number; // D62 in Excel (900 mm) - used for door heater calculation
   doorClearOpeningHeight: number; // E62 in Excel (2000 mm) - used for door heater calculation
   doorDimensionUnit: 'mm' | 'm'; // Unit for door dimensions
-  capacityIncludingSafety: number; // D43 in Excel (10%) - used for safety factor calculation
+  capacityIncludingSafety: number; // D43 in Excel (default 20%) - user-set safety factor percentage
 
   // REMOVED UNUSED PARAMETERS:
   // dailyLoading - only used in freezer calculations, not cold room
@@ -163,7 +178,8 @@ export interface CalculationResults {
   totalLoadKJ: number; // G40 in Excel (kJ/24Hr)
   totalLoadKw: number; // G41 in Excel (kW)
   refrigerationCapacityTR: number; // G42 in Excel (TR)
-  capacityIncludingSafety: number; // G43 in Excel (TR)
+  capacityIncludingSafety: number; // G43 in Excel (TR with safety)
+  safetyFactorPercent: number; // User-defined safety factor percentage
 
   // Sensible and Latent Heat (Excel structure)
   sensibleHeat: number; // G44 in Excel (kJ/24Hr)

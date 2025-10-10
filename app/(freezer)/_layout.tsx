@@ -2,9 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Tabs, router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function FreezerTabsLayout() {
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
+
+  const tabRoutes = ['/', '/product', '/miscellaneous', '/results'] as const;
+  const tabTitles = ['Room Details', 'Product', 'Miscellaneous', 'Results'];
 
   const getTabIndex = (pathname: string) => {
     if (pathname.includes('/index')) return 0;
@@ -15,49 +21,35 @@ export default function FreezerTabsLayout() {
   };
 
   const getCurrentTabIndex = () => getTabIndex(pathname);
+  const isResultsPage = pathname.includes('/results');
 
   const navigateToTab = (direction: 'left' | 'right') => {
     const currentIndex = getCurrentTabIndex();
-    const tabs = ['/', '/product', '/miscellaneous', '/results'];
-
     let newIndex;
     if (direction === 'left') {
-      newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+      newIndex = currentIndex > 0 ? currentIndex - 1 : tabRoutes.length - 1;
     } else {
-      newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+      newIndex = currentIndex < tabRoutes.length - 1 ? currentIndex + 1 : 0;
     }
 
-    router.push(`(freezer)${tabs[newIndex]}` as any);
+    router.push(`(freezer)${tabRoutes[newIndex]}` as any);
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12, paddingBottom: 12 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
           <Ionicons name="arrow-back" size={24} color="#1e40af" />
         </TouchableOpacity>
-        <View style={styles.navigationContainer}>
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => navigateToTab('left')}
-          >
-            <Ionicons name="chevron-back" size={24} color="#f97316" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Freezer Room Calculator</Text>
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => navigateToTab('right')}
-          >
-            <Ionicons name="chevron-forward" size={24} color="#f97316" />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.headerTitle}>Freezer Room Calculator</Text>
         <View style={styles.spacer} />
       </View>
 
-      <Tabs
+      <View style={styles.tabsWrapper}>
+        <Tabs
         screenOptions={{
           tabBarActiveTintColor: '#1e40af',
           tabBarInactiveTintColor: '#6b7280',
@@ -112,6 +104,15 @@ export default function FreezerTabsLayout() {
           }}
         />
       </Tabs>
+
+      {!isResultsPage && (
+        <BottomNavArrows
+          onLeftPress={() => navigateToTab('left')}
+          onRightPress={() => navigateToTab('right')}
+          isFixed={true}
+        />
+      )}
+      </View>
     </View>
   );
 }
@@ -124,13 +125,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingTop: 60,
-    paddingBottom: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
-    minHeight: 80,
   },
   backButton: {
     padding: 8,
@@ -138,31 +137,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navigationContainer: {
+  tabsWrapper: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
-  navButton: {
-    padding: 6,
-    marginHorizontal: 4,
-    backgroundColor: '#fef3c7',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'visible',
   },
   headerTitle: {
     fontSize: 14,
@@ -170,15 +146,9 @@ const styles = StyleSheet.create({
     color: '#1e40af',
     textAlign: 'center',
     flex: 1,
-    paddingHorizontal: 2,
+    paddingHorizontal: 8,
     letterSpacing: -0.5,
-    numberOfLines: 1,
-    flexWrap: 'nowrap',
     minWidth: 0,
-    maxWidth: '100%',
-    overflow: 'hidden',
-    adjustsFontSizeToFit: true,
-    minimumFontScale: 0.7,
   },
   spacer: {
     width: 44,

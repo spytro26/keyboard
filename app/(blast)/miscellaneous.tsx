@@ -285,6 +285,18 @@ export default function BlastMiscellaneousTab() {
 
 
 
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Safety Factor</Text>
+
+                        <InputField
+                            label="Safety Factor"
+                            value={miscData.capacityIncludingSafety.toString()}
+                            onChangeText={(value) => handleValueChange('capacityIncludingSafety', value)}
+                            keyboardType="decimal-pad"
+                            unit="%"
+                        />
+                    </View>
+
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Powered by Enzo</Text>
                     </View>

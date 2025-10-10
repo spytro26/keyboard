@@ -125,7 +125,7 @@ export default function FreezerMiscellaneousTab() {
 
           <InputField
             label="Equipment Power"
-            value={miscData.equipmentPower.toString()}
+            value={(miscData.equipmentPower ?? 0).toString()}
             onChangeText={(value) => handleValueChange('equipmentPower', value)}
             unit="W"
           />
@@ -143,14 +143,14 @@ export default function FreezerMiscellaneousTab() {
 
           <InputField
             label="Number of People"
-            value={miscData.numberOfPeople.toString()}
+            value={(miscData.numberOfPeople ?? 0).toString()}
             onChangeText={(value) => handleValueChange('numberOfPeople', value)}
             unit="people"
           />
 
           <InputField
             label="People Usage Factor"
-            value={miscData.peopleUsageFactor.toString()}
+            value={(miscData.peopleUsageFactor ?? 0).toString()}
             onChangeText={(value) => handleValueChange('peopleUsageFactor', value)}
             unit="factor"
           />
@@ -168,7 +168,7 @@ export default function FreezerMiscellaneousTab() {
 
           <InputField
             label="Light Power"
-            value={miscData.lightPowerKw.toString()}
+            value={(miscData.lightPowerKw ?? 0).toString()}
             onChangeText={(value) => handleValueChange('lightPowerKw', value)}
             unit="kW"
           />
@@ -187,14 +187,14 @@ export default function FreezerMiscellaneousTab() {
           <Text style={styles.subsectionTitle}>Peripheral Heaters</Text>
           <InputField
             label="Heater Power"
-            value={miscData.peripheralHeaterPower.toString()}
+            value={(miscData.peripheralHeaterPower ?? 0).toString()}
             onChangeText={(value) => handleValueChange('peripheralHeaterPower', value)}
             unit="kW"
           />
 
           <InputField
             label="Number of Heaters"
-            value={miscData.peripheralHeaterQuantity.toString()}
+            value={(miscData.peripheralHeaterQuantity ?? 0).toString()}
             onChangeText={(value) => handleValueChange('peripheralHeaterQuantity', value)}
             unit="units"
           />
@@ -202,7 +202,7 @@ export default function FreezerMiscellaneousTab() {
           <Text style={styles.subsectionTitle}>Door Heaters</Text>
           <InputField
             label="Door Heater Power"
-            value={miscData.doorHeaterPower.toString()}
+            value={(miscData.doorHeaterPower ?? 0).toString()}
             onChangeText={(value) => handleValueChange('doorHeaterPower', value)}
             unit="kW"
           />
@@ -217,14 +217,14 @@ export default function FreezerMiscellaneousTab() {
           <Text style={styles.subsectionTitle}>Tray Heaters</Text>
           <InputField
             label="Tray Heater Power"
-            value={miscData.trayHeaterPower.toString()}
+            value={(miscData.trayHeaterPower ?? 0).toString()}
             onChangeText={(value) => handleValueChange('trayHeaterPower', value)}
             unit="kW"
           />
 
           <InputField
             label="Number of Trays"
-            value={miscData.trayHeaterQuantity.toString()}
+            value={(miscData.trayHeaterQuantity ?? 0).toString()}
             onChangeText={(value) => handleValueChange('trayHeaterQuantity', value)}
             unit="units"
           />
@@ -232,14 +232,14 @@ export default function FreezerMiscellaneousTab() {
           <Text style={styles.subsectionTitle}>Drain Heaters</Text>
           <InputField
             label="Drain Heater Power"
-            value={miscData.drainHeaterPower.toString()}
+            value={(miscData.drainHeaterPower ?? 0).toString()}
             onChangeText={(value) => handleValueChange('drainHeaterPower', value)}
             unit="kW"
           />
 
           <InputField
             label="Number of Drains"
-            value={miscData.drainHeaterQuantity.toString()}
+            value={(miscData.drainHeaterQuantity ?? 0).toString()}
             onChangeText={(value) => handleValueChange('drainHeaterQuantity', value)}
             unit="units"
           />
@@ -265,6 +265,21 @@ export default function FreezerMiscellaneousTab() {
             selectedUnit={miscData.doorDimensionUnit || 'mm'}
             onUnitChange={handleDoorUnitChange}
           />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Safety Factor</Text>
+
+          <InputField
+            label="Safety Factor"
+            value={miscData.capacityIncludingSafety.toString()}
+            onChangeText={(value) => handleValueChange('capacityIncludingSafety', value)}
+            unit="%"
+          />
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Powered by Enzo</Text>
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
@@ -347,5 +362,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     lineHeight: 20,
+  },
+  footer: {
+    marginTop: 32,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontStyle: 'italic',
   },
 });

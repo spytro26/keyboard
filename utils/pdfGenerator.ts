@@ -42,7 +42,9 @@ const getLogoBase64 = async (): Promise<{
 
   // Method 1: Try using the simpler fetch approach first (more reliable)
   try {
-    const logoAsset = Asset.fromModule(require('../assets/images/logo.png'));
+    const logoAsset = Asset.fromModule(
+      require('../assets/images/tradeEnzo.jpg')
+    );
 
     // Ensure asset is available
     await logoAsset.downloadAsync();
@@ -97,7 +99,9 @@ const getLogoBase64 = async (): Promise<{
 
   // Method 2: Try the new File API as backup
   try {
-    const logoAsset = Asset.fromModule(require('../assets/images/logo.png'));
+    const logoAsset = Asset.fromModule(
+      require('../assets/images/tradeEnzo.jpg')
+    );
     await logoAsset.downloadAsync();
 
     if (logoAsset.localUri) {
@@ -512,13 +516,14 @@ const generateHTMLContent = (
     ? `
       @page { margin: 8mm; }
       * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      body { -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; padding-bottom: 4px; overflow: hidden; }
-      .ios-fit { zoom: 0.9; }
-      .ios-fit.ios-fit--freezer { zoom: 0.88; }
+      body { -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; padding-bottom: 0; overflow: hidden; font-size: 8.5px; }
+      .ios-fit { zoom: 0.88; }
+      .ios-fit.ios-fit--freezer { zoom: 0.86; }
       .info-card, .summary-card, .meta-row { page-break-inside: avoid; break-inside: avoid; }
-      .footer { position: static; bottom: auto; margin-top: 4mm; padding-top: 6px; }
-      .watermark { position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); opacity: 0.1; }
-      .watermark img { width: 220px; height: 220px; }
+      .watermark { top: 50%; opacity: 0.14; }
+      .watermark img { width: 320px; height: 320px; }
+      .report-content { padding: 12px 20px 14px; }
+      .section-block { margin-bottom: 12px; }
     `
     : '';
 
@@ -554,36 +559,39 @@ const generateHTMLContent = (
           line-height: 1.2;
           color: var(--value-color);
           background: var(--body-bg);
-          font-size: 8.5px;
+          font-size: 9px;
           height: ${isIOS ? 'auto' : '100vh'};
           position: relative;
           max-height: ${isIOS ? 'none' : '285mm'};
-          padding-bottom: ${isIOS ? '12px' : '38px'};
+          padding-bottom: ${isIOS ? '0' : '18px'};
           overflow: hidden;
         }
 
         .watermark {
-          position: ${isIOS ? 'absolute' : 'fixed'};
+          position: absolute;
           top: 50%;
           left: 50%;
-          transform: translate(-50%, -50%) rotate(-45deg);
-          z-index: -1;
-          opacity: ${isIOS ? '0.12' : '0.16'};
+          transform: translate(-50%, -50%);
+          z-index: 3;
+          opacity: 0.12;
           pointer-events: none;
         }
 
         .watermark img {
-          width: ${isIOS ? '240px' : '320px'};
-          height: ${isIOS ? '240px' : '320px'};
+          width: 360px;
+          height: 360px;
           object-fit: contain;
+          filter: none;
         }
 
         .report-wrapper {
+          position: relative;
           margin: 0 auto;
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.96);
           border-radius: 8px;
           box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
           overflow: hidden;
+          z-index: 1; /* create stacking context */
         }
 
         .summary-banner {
@@ -593,6 +601,8 @@ const generateHTMLContent = (
           padding: 16px 24px;
           background: var(--primary-blue);
           color: #ffffff;
+          position: relative;
+          z-index: 2;
         }
 
         .summary-left {
@@ -659,6 +669,8 @@ const generateHTMLContent = (
           letter-spacing: 1px;
           text-transform: uppercase;
           border-bottom: 1px solid #d3d8df;
+          position: relative;
+          z-index: 2;
         }
 
         .meta-row {
@@ -669,6 +681,8 @@ const generateHTMLContent = (
           padding: 8px 24px;
           background: var(--primary-blue);
           flex-wrap: wrap;
+          position: relative;
+          z-index: 2;
         }
 
         .meta-chip {
@@ -687,8 +701,10 @@ const generateHTMLContent = (
         }
 
         .report-content {
+          position: relative;
+          z-index: 2;
           padding: 14px 22px 16px;
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.95);
         }
 
         .summary-card-row {
@@ -703,7 +719,7 @@ const generateHTMLContent = (
         }
 
         .summary-card {
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.92);
           border: 1px solid var(--primary-blue);
           border-radius: 10px;
           padding: 14px 10px;
@@ -716,7 +732,7 @@ const generateHTMLContent = (
         }
 
         .summary-card-label {
-          font-size: 10px;
+          font-size: 10.5px;
           font-weight: 700;
           color: var(--primary-blue);
           letter-spacing: 0.6px;
@@ -731,13 +747,13 @@ const generateHTMLContent = (
         }
 
         .summary-value {
-          font-size: 18px;
+          font-size: 19px;
           font-weight: 800;
           color: var(--value-color);
         }
 
         .summary-unit {
-          font-size: 10px;
+          font-size: 10.5px;
           font-weight: 600;
           color: var(--value-color);
         }
@@ -750,7 +766,7 @@ const generateHTMLContent = (
           background: var(--primary-blue);
           color: #ffffff;
           padding: 6px 12px;
-          font-size: 10px;
+          font-size: 10.5px;
           text-transform: uppercase;
           font-weight: 700;
           border-radius: 6px 6px 0 0;
@@ -761,11 +777,11 @@ const generateHTMLContent = (
         .detail-columns {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
-          background: #ffffff;
+          gap: 12px;
+          background: rgba(255, 255, 255, 0.9);
           border: 1px solid var(--table-border);
           border-top: none;
-          padding: 12px;
+          padding: 14px;
           border-radius: 0 0 10px 10px;
         }
 
@@ -773,14 +789,14 @@ const generateHTMLContent = (
         .detail-column {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
         }
 
         .info-card {
           border: 1px solid var(--table-border);
           border-radius: 8px;
           overflow: hidden;
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.9);
           box-shadow: none;
         }
 
@@ -789,10 +805,10 @@ const generateHTMLContent = (
         }
 
         .info-card-title {
-          background: var(--primary-blue);
+          background: rgba(2, 148, 207, 0.92);
           color: #ffffff;
           font-weight: 700;
-          font-size: 9.5px;
+          font-size: 10px;
           letter-spacing: 0.6px;
           text-transform: uppercase;
           padding: 7px 12px;
@@ -802,6 +818,7 @@ const generateHTMLContent = (
           width: 100%;
           border-collapse: collapse;
           border: 1px solid var(--table-border);
+          table-layout: fixed;
         }
 
         .info-table td {
@@ -812,6 +829,7 @@ const generateHTMLContent = (
           padding: 5px 8px;
           font-weight: 600;
           color: var(--label-color);
+          width: 55%;
         }
 
         .cell-value {
@@ -820,6 +838,7 @@ const generateHTMLContent = (
           font-weight: 700;
           color: var(--value-color);
           letter-spacing: 0.2px;
+          width: 45%;
         }
 
         .row-highlight {
@@ -861,15 +880,16 @@ const generateHTMLContent = (
           ? `<div class="ios-fit ${isFreezerDoc ? 'ios-fit--freezer' : ''}">`
           : ''
       }
-      ${
-        watermarkBase64
-          ? `
-        <div class="watermark">
-          <img src="${watermarkBase64}" alt="Watermark" />
-        </div>`
-          : ''
-      }
       <div class="report-wrapper">
+        <div class="watermark">
+          <img src="${
+            watermarkBase64 ||
+            'data:image/svg+xml;base64,' +
+              btoa(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><g opacity="0.9"><circle cx="100" cy="100" r="96" fill="#ffffff"/><text x="100" y="116" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="bold" fill="#0294cf">E</text></g></svg>'
+              )
+          }" alt="Watermark" />
+        </div>
         <div class="summary-banner">
           <div class="summary-left">
             <div class="logo-box">
@@ -902,15 +922,7 @@ const generateHTMLContent = (
           ${detailedSectionsHTML}
         </div>
       </div>
-      ${
-        !isIOS
-          ? `
-        <div class="footer">
-          <div class="footer-brand">Powered by Enzo CoolCalc</div>
-        </div>`
-          : ''
-      }
-      ${logoStatus ? `<!-- Debug: ${logoStatus} -->` : ''}
+  ${logoStatus ? `<!-- Debug: ${logoStatus} -->` : ''}
       ${isIOS ? '</div>' : ''}
     </body>
     </html>

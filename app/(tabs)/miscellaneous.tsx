@@ -265,6 +265,17 @@ export default function MiscellaneousTab() {
             selectedUnit={miscData.doorDimensionUnit || 'mm'}
             onUnitChange={handleDoorUnitChange}
           />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Safety Factor</Text>
+
+          <InputField
+            label="Safety Factor"
+            value={miscData.capacityIncludingSafety?.toString() || '20'}
+            onChangeText={(value) => handleNumericChange('capacityIncludingSafety', value)}
+            unit="%"
+          />
 
         </View>
       </ScrollView>

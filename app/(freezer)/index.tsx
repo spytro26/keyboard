@@ -201,6 +201,10 @@ export default function FreezerRoomDetailsTab() {
         </View>
 
         {/* Info note removed for cleaner UI */}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Powered by Enzo</Text>
+        </View>
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
@@ -294,5 +298,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     lineHeight: 20,
+  },
+  footer: {
+    marginTop: 32,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontStyle: 'italic',
   },
 });

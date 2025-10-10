@@ -54,9 +54,11 @@ const defaultFreezerMiscData: FreezerMiscellaneousData = {
     airChangeRate: 4.2,        // Excel shows 4.2 L/S air change rate
     enthalpyDiff: 0.14,        // Excel shows 0.14 kJ/L enthalpy difference
     hoursOfLoad: 16,           // Excel shows 16 hrs of load
+    capacityIncludingSafety: 20, // Default safety factor percentage
 
     // Equipment - Excel values (will be overridden by specific calculations)
     equipmentPower: 1110,      // Total fan motor power = 0.37 * 3 * 1000 = 1110W
+    equipmentQuantity: 6,      // Matching fan quantity for equipment
     equipmentUsageHours: 16,   // Excel shows 16 hrs
 
     // Lighting - Excel values
@@ -67,6 +69,8 @@ const defaultFreezerMiscData: FreezerMiscellaneousData = {
     peripheralHeaters: 12000,  // Excel shows 1.5 kW * 8 heaters = 12000W
     doorHeaters: 2160,         // Excel shows 0.27 kW * 8 doors = 2160W
     trayHeaters: 2200,         // Excel shows 2.2 kW = 2200W
+    doorHeaterCapacity: 0.27,
+    doorHeaterUsageHours: 16,
 
     // Occupancy - Excel values
     occupancyCount: 4.6,       // Excel shows 4.6 people
@@ -97,7 +101,6 @@ const defaultFreezerMiscData: FreezerMiscellaneousData = {
     numberOfPeople: 4,         // Excel shows 4 people
     peopleUsageFactor: 0.407,  // Excel shows 0.407 kW heat equiv
     lightPowerKw: 0.14,        // Excel shows 0.14 kW lighting
-    lightUsageHours: 16,       // Excel shows 16 hrs lighting usage
     
     // Door Clear Opening - Excel values
     doorClearOpeningWidth: 900,  // Excel shows 900 mm width

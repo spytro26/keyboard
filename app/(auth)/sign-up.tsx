@@ -156,10 +156,10 @@ export default function SignUpScreen() {
                     console.log('=== 🚨 PHONE NUMBER ALREADY REGISTERED 🚨 ===');
                     console.error(`[SignUp] ❌ Found ${querySnapshot.size} existing user(s) with phone: ${fullPhoneNumber}`);
                     
-                    querySnapshot.forEach((doc, index) => {
-                        const userData = doc.data();
+                    querySnapshot.docs.forEach((docSnap, index) => {
+                        const userData = docSnap.data();
                         console.error(`[SignUp] ❌ Existing User #${index + 1}:`);
-                        console.error(`[SignUp] ❌   Document ID: ${doc.id}`);
+                        console.error(`[SignUp] ❌   Document ID: ${docSnap.id}`);
                         console.error(`[SignUp] ❌   Name: ${userData.name || 'N/A'}`);
                         console.error(`[SignUp] ❌   Phone: ${userData.phone || 'N/A'}`);
                         console.error(`[SignUp] ❌   Email: ${userData.email || 'N/A'}`);
@@ -327,7 +327,7 @@ export default function SignUpScreen() {
                     {/* Logo and App Name Section */}
                     <View style={styles.logoContainer}>
                         <Image 
-                            source={require('@/assets/images/logo.png')} 
+                            source={require('@/assets/images/output_450x255.jpg')} 
                             style={styles.logo}
                             resizeMode="contain"
                         />
@@ -418,23 +418,29 @@ const styles = StyleSheet.create({
         minHeight: '100%',
         paddingBottom: 50,
     },
-    logoContainer: { 
-        alignItems: 'center', 
-        marginBottom: 24,
-        paddingVertical: 20,
+    logoContainer: {
+        alignItems: 'center',
+        marginBottom: 30,
+        paddingVertical: 26,
     },
-    logo: { 
-        width: Math.min(width * 0.15, 80), 
-        height: Math.min(width * 0.15, 80), 
-        marginBottom: 8,
+    logo: {
+        width: Math.min(width * 0.66, 264),
+        height: Math.min(width * 0.66 * (255 / 450), 150),
+        maxWidth: 264,
+        maxHeight: 150,
+        marginBottom: 14,
+        borderRadius: 16,
+        overflow: 'hidden',
     },
-    appName: { 
-        fontSize: Math.min(width * 0.06, 24), 
-        fontWeight: '900', 
-        color: '#000000', 
+    appName: {
+        fontSize: Math.min(width * 0.088, 33),
+        fontWeight: '900',
+        color: '#0f172a',
+        letterSpacing: 0.55,
+        textTransform: 'uppercase',
     },
-    title: { fontSize: 24, fontWeight: '800', marginBottom: 12, textAlign: 'center', color: '#111827' },
-    subtitle: { fontSize: 14, color: '#6b7280', textAlign: 'center', marginBottom: 10 },
+    title: { fontSize: 26, fontWeight: '800', marginBottom: 14, textAlign: 'center', color: '#111827' },
+    subtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', marginBottom: 12 },
     input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 12, marginBottom: 12 },
     button: { backgroundColor: '#2563eb', padding: 14, borderRadius: 10, alignItems: 'center' },
     buttonDisabled: { opacity: 0.7 },

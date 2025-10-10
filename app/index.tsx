@@ -59,7 +59,7 @@ export default function HomePage() {
                 {/* Logo and App Title */}
                 <View style={styles.titleContainer}>
                     <Image
-                        source={require('@/assets/images/logo.png')}
+                        source={require('@/assets/images/output_450x255.jpg')}
                         style={styles.logo}
                         resizeMode="contain"
                     />
@@ -109,37 +109,39 @@ const styles = StyleSheet.create({
     },
     titleContainer: {
         alignItems: 'center',
-        marginBottom: height * 0.06,
-        paddingHorizontal: width < 400 ? 12 : 20,
+        marginBottom: height * 0.072,
+        paddingHorizontal: width < 400 ? 16 : 26,
     },
     logo: {
-        width: width < 400 ? width * 0.32 : width * 0.28,
-        height: width < 400 ? width * 0.32 : width * 0.28,
-        marginBottom: width < 400 ? 20 : 24,
-        maxWidth: 140,
-        maxHeight: 140,
+        width: width < 400 ? width * 0.64 : width * 0.56,
+        height: Math.min((width < 400 ? width * 0.64 : width * 0.56) * (255 / 450), 150),
+        marginBottom: width < 400 ? 24 : 28,
+        maxWidth: 264,
+        maxHeight: 150,
+        borderRadius: 18,
+        overflow: 'hidden',
     },
     appTitle: {
-        fontSize: width < 400 ? 38 : width > 500 ? 52 : 46,
+        fontSize: width < 400 ? 35 : width > 500 ? 48 : 43,
         fontWeight: '800',
-        color: '#1e293b',
-        letterSpacing: width < 400 ? 0.8 : 1.2,
+        color: '#0f172a',
+        letterSpacing: width < 400 ? 1 : 1.4,
         textAlign: 'center',
-        marginBottom: 6,
-        textShadowColor: 'rgba(0, 0, 0, 0.1)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-        lineHeight: width < 400 ? 42 : 56,
+        marginBottom: 9,
+        textShadowColor: 'rgba(15, 23, 42, 0.08)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+        lineHeight: width < 400 ? 40 : 50,
     },
     subtitle: {
-        fontSize: width < 400 ? 16 : width > 500 ? 20 : 18,
+        fontSize: width < 400 ? 15 : width > 500 ? 18 : 17,
         fontWeight: '500',
-        color: '#64748b',
-        letterSpacing: 0.3,
+        color: '#475569',
+        letterSpacing: 0.65,
         textAlign: 'center',
-        opacity: 0.8,
+        opacity: 0.87,
         lineHeight: width < 400 ? 20 : 24,
-        paddingHorizontal: width < 400 ? 8 : 0,
+        paddingHorizontal: width < 400 ? 10 : 6,
     },
     buttonsContainer: {
         gap: width < 400 ? 16 : 20,

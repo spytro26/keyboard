@@ -27,23 +27,26 @@ export default function FreezerResultsTab() {
   useGlobalUpdate();
 
   const results = calculateFreezerHeatLoad(roomData, productData, miscData);
+  const baseLoadKw = results.totalLoadKw || 0;
+  const safetyFactorPercent = results.safetyFactorPercent ?? miscData.capacityIncludingSafety ?? 20;
+  const safetyMultiplier = 1 + safetyFactorPercent / 100;
+  const loadKwWithSafety = baseLoadKw * safetyMultiplier;
+  const loadBtuHrWithSafety = loadKwWithSafety * 3412;
 
   const handleSharePDF = async () => {
     setIsGenerating(true);
     setNetworkStatus('Preparing data...');
     
     try {
-      const loadKw = results.totalLoadKw || 0;
-      const loadBtuHr = loadKw * 3412; // kW -> BTU/hr
       const pdfData: PDFData = {
         title: 'Freezer Room Heat Load Summary',
         subtitle: 'Key calculation results for freezer room refrigeration system',
         userName: getUserDisplayName(), // Use helper function with fallback
         projectName: roomData.projectName,
         finalResults: [
-          { label: 'Total Load (with 20% Safety)', value: (loadKw * 1.2).toFixed(1), unit: 'kW' },
-          { label: 'Base Load (without safety)', value: loadKw.toFixed(1), unit: 'kW' },
-          { label: 'Load', value: loadBtuHr.toFixed(0), unit: 'BTU/hr' },
+          { label: 'Total Load', value: loadKwWithSafety.toFixed(1), unit: 'kW' },
+          { label: 'Load', value: loadBtuHrWithSafety.toFixed(0), unit: 'BTU/hr' },
+          { label: 'Safety Factor', value: safetyFactorPercent.toFixed(1), unit: '%' },
         ],
         inputs: [
           {
@@ -275,21 +278,21 @@ export default function FreezerResultsTab() {
           {/* Main Results - Highlighted */}
           <SectionCard title="Main Results">
             <ResultCard
-              title="Total Load (with 20% Safety)"
-              value={results.totalLoadKw * 1.2}
+              title={`Total Load (with ${safetyFactorPercent.toFixed(1)}% Safety)`}
+              value={loadKwWithSafety}
               unit="kW"
               isHighlighted={true}
             />
             <ResultCard
-              title="Base Load (without safety)"
-              value={results.totalLoadKw}
-              unit="kW"
-              isHighlighted={true}
-            />
-            <ResultCard
-              title="Load in BTU/hr"
-              value={(results.totalLoadKw || 0) * 3412}
+              title="Load in BTU/hr (with safety)"
+              value={loadBtuHrWithSafety}
               unit="BTU/hr"
+              isHighlighted={true}
+            />
+            <ResultCard
+              title="Safety Factor"
+              value={safetyFactorPercent}
+              unit="%"
               isHighlighted={true}
             />
           </SectionCard>

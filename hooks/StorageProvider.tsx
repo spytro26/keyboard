@@ -58,6 +58,7 @@ const defaultMiscData: MiscellaneousData = {
     // Equipment (Excel row 25)
     fanMotorRating: 0.25,      // Excel C25: 0.25 kW
     fanQuantity: 1,            // Excel D25: 1 fan
+    equipmentQuantity: 1,
     equipmentUsageHours: 20,   // Excel F25: 20 hrs
 
     // Occupancy (Excel row 27)
@@ -85,7 +86,7 @@ const defaultMiscData: MiscellaneousData = {
     doorClearOpeningWidth: 900, // Excel D62: 900 mm - used for door heater calculation
     doorClearOpeningHeight: 2000, // Excel E62: 2000 mm - used for door heater calculation
     doorDimensionUnit: 'mm', // Default unit for door dimensions
-    capacityIncludingSafety: 10, // Excel D43: 10% - used for safety factor calculation
+    capacityIncludingSafety: 20, // Default safety factor percentage
     
     // REMOVED UNUSED PARAMETERS:
     // dailyLoading - only used in freezer calculations
