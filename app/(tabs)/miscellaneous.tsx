@@ -8,8 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { useStorageContext } from '@/hooks/StorageProvider';
+import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function MiscellaneousTab() {
   const { miscData, saveMiscData } = useStorageContext();
@@ -118,7 +120,7 @@ export default function MiscellaneousTab() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={true}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Enzo Cool Calc</Text>
@@ -267,6 +269,25 @@ export default function MiscellaneousTab() {
           />
         </View>
 
+        {/* Compressor Air Load */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Compressor Air Load</Text>
+
+          <InputField
+            label="Compressor Power"
+            value={miscData.compressorPowerKW?.toString() || '0'}
+            onChangeText={(value) => handleNumericChange('compressorPowerKW', value)}
+            unit="kW"
+          />
+
+          <InputField
+            label="Compressor Running Hours"
+            value={miscData.compressorAirRunningHours?.toString() || '0'}
+            onChangeText={(value) => handleNumericChange('compressorAirRunningHours', value)}
+            unit="hrs/day"
+          />
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Safety Factor</Text>
 
@@ -278,6 +299,11 @@ export default function MiscellaneousTab() {
           />
 
         </View>
+        <BottomNavArrows
+          onLeftPress={() => router.push('/(tabs)/product' as any)}
+          onRightPress={() => router.push('/(tabs)/results' as any)}
+          isFixed={false}
+        />
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

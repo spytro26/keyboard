@@ -130,6 +130,10 @@ export interface MiscellaneousData {
   drainHeaters?: number;
   drainHeatersQuantity?: number;
 
+  // Compressor Air Load
+  compressorPowerKW?: number; // Compressor power in kW
+  compressorAirRunningHours?: number; // Compressor running hours per day
+
   // Temperature parameters (Excel structure)
   ambientTemp: number; // D55 in Excel (45°C)
   roomTemp: number; // D56 in Excel (2°C)
@@ -172,7 +176,8 @@ export interface CalculationResults {
   occupancyLoad: number; // G27 in Excel (kJ/24Hr)
   lightLoad: number; // G29 in Excel (kJ/24Hr)
   doorHeaterLoad: number; // G33 in Excel (kJ/24Hr)
-  totalMiscLoad: number; // Sum of G25, G27, G29, G33
+  compressorLoad: number; // Compressor load (kJ/24Hr)
+  totalMiscLoad: number; // Sum of G25, G27, G29, G33, and compressor
 
   // Final results (Excel structure)
   totalLoadKJ: number; // G40 in Excel (kJ/24Hr)
@@ -200,6 +205,7 @@ export interface CalculationResults {
   occupancyLoadTR: number; // H27 in Excel (TR)
   lightLoadTR: number; // H29 in Excel (TR)
   doorHeaterLoadTR: number; // H33 in Excel (TR)
+  compressorLoadTR: number; // Compressor load (TR)
   totalLoadTR: number; // H39 in Excel (TR)
 
   // Temperature differences (Excel structure)

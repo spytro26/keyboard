@@ -101,6 +101,10 @@ export interface BlastMiscellaneousData {
     drainHeaterCount: number;          // - Excel shows 1
     drainHeaterHours: number;          // Hours - Excel shows 8
 
+    // Compressor Air Load
+    compressorPowerKW?: number;        // Compressor power in kW
+    compressorAirRunningHours?: number; // Compressor running hours per day
+
     // Unit preferences
     volumeUnit: 'm³' | 'ft³';         // Volume unit preference
     capacityIncludingSafety: number;  // Safety factor percentage
@@ -200,6 +204,10 @@ const defaultBlastMiscData: BlastMiscellaneousData = {
     drainHeaterCount: 1,            // Excel E34
     drainHeaterHours: 8,            // Excel F34
 
+    // Compressor Air Load
+    compressorPowerKW: 0,           // Default 0 kW
+    compressorAirRunningHours: 0,   // Default 0 hours
+
     // Unit preferences
     volumeUnit: 'm³',
     capacityIncludingSafety: 20,
@@ -229,6 +237,7 @@ export interface BlastCalculationResults {
     doorHeaterLoad: number;        // Excel G31: =(C31*D31*3600*F31)
     trayHeaterLoad: number;        // Excel G33: =(C33*D33*3600*F33)
     drainHeaterLoad: number;       // Excel G34: =(C34*D34*3600*F34)
+    compressorLoad: number;        // Compressor load
     totalMiscLoad: number;         // Sum of all miscellaneous loads
 
     // Individual TR calculations - Excel formulas
@@ -246,6 +255,7 @@ export interface BlastCalculationResults {
     doorHeaterLoadTR: number;       // Excel: =G31/(3600*3.517*24)
     trayHeaterLoadTR: number;       // Excel: =G33/(3600*3.517*24)
     drainHeaterLoadTR: number;     // Excel: =G34/(3600*3.517*24)
+    compressorLoadTR: number;      // Compressor load TR
 
     // Final results - Excel calculations
     totalLoadKJ: number;           // Excel G36: =SUM(G8:G34)

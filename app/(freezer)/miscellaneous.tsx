@@ -8,8 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { useFreezerStorageContext } from '@/hooks/FreezerStorageProvider';
+import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function FreezerMiscellaneousTab() {
   const { miscData, saveMiscData } = useFreezerStorageContext();
@@ -67,7 +69,7 @@ export default function FreezerMiscellaneousTab() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={true}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Enzo Cool Calc</Text>
@@ -268,6 +270,24 @@ export default function FreezerMiscellaneousTab() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Compressor Air Load</Text>
+
+          <InputField
+            label="Compressor Power"
+            value={miscData.compressorPowerKW?.toString() || '0'}
+            onChangeText={(value) => handleValueChange('compressorPowerKW', value)}
+            unit="kW"
+          />
+
+          <InputField
+            label="Compressor Running Hours"
+            value={miscData.compressorAirRunningHours?.toString() || '0'}
+            onChangeText={(value) => handleValueChange('compressorAirRunningHours', value)}
+            unit="hrs/day"
+          />
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Safety Factor</Text>
 
           <InputField
@@ -278,9 +298,11 @@ export default function FreezerMiscellaneousTab() {
           />
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Powered by Enzo</Text>
-        </View>
+        <BottomNavArrows
+          onLeftPress={() => router.push('/(freezer)/product' as any)}
+          onRightPress={() => router.push('/(freezer)/results' as any)}
+          isFixed={false}
+        />
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -362,17 +384,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     lineHeight: 20,
-  },
-  footer: {
-    marginTop: 32,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontStyle: 'italic',
   },
 });

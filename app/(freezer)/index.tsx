@@ -8,9 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { InsulationTypePicker } from '@/components/InsulationTypePicker';
 import { useFreezerStorageContext } from '@/hooks/FreezerStorageProvider';
+import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function FreezerRoomDetailsTab() {
   const { roomData, saveRoomData, miscData, saveMiscData } = useFreezerStorageContext();
@@ -64,7 +66,7 @@ export default function FreezerRoomDetailsTab() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={true}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View style={styles.content}>
           <View style={styles.header}>
@@ -202,9 +204,11 @@ export default function FreezerRoomDetailsTab() {
 
         {/* Info note removed for cleaner UI */}
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Powered by Enzo</Text>
-        </View>
+        <BottomNavArrows
+          onLeftPress={() => router.push('/(freezer)/results' as any)}
+          onRightPress={() => router.push('/(freezer)/product' as any)}
+          isFixed={false}
+        />
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
@@ -298,17 +302,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     lineHeight: 20,
-  },
-  footer: {
-    marginTop: 32,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontStyle: 'italic',
   },
 });

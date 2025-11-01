@@ -8,10 +8,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { FreezerProductPicker } from '@/components/FreezerProductPicker';
 import { useFreezerStorageContext } from '@/hooks/FreezerStorageProvider';
 import { freezerProducts } from '@/data/freezerProducts';
+import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function FreezerProductTab() {
   const { productData, saveProductData, miscData, saveMiscData } = useFreezerStorageContext();
@@ -86,7 +88,7 @@ export default function FreezerProductTab() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={true}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Enzo Cool Calc</Text>
@@ -195,9 +197,11 @@ export default function FreezerProductTab() {
           />
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Powered by Enzo</Text>
-        </View>
+        <BottomNavArrows
+          onLeftPress={() => router.push('/(freezer)/' as any)}
+          onRightPress={() => router.push('/(freezer)/miscellaneous' as any)}
+          isFixed={false}
+        />
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -279,17 +283,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     lineHeight: 20,
-  },
-  footer: {
-    marginTop: 32,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontStyle: 'italic',
   },
 });

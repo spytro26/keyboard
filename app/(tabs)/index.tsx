@@ -8,9 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { InsulationTypePicker } from '@/components/InsulationTypePicker';
 import { useStorageContext } from '@/hooks/StorageProvider';
+import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function RoomDetailsTab() {
   const { roomData, saveRoomData, miscData, saveMiscData } = useStorageContext();
@@ -64,7 +66,7 @@ export default function RoomDetailsTab() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={true}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View style={styles.content}>
           <View style={styles.header}>
@@ -201,6 +203,12 @@ export default function RoomDetailsTab() {
         </View>
 
         {/* Info note removed for cleaner UI */}
+
+        <BottomNavArrows
+          onLeftPress={() => router.push('/(tabs)/results' as any)}
+          onRightPress={() => router.push('/(tabs)/product' as any)}
+          isFixed={false}
+        />
         </View>
       </ScrollView>
       </KeyboardAvoidingView>

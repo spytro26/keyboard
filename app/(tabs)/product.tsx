@@ -8,10 +8,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { ProductPicker } from '@/components/ProductPicker';
 import { PRODUCT_PRESET_MAP } from '@/data/products';
 import { useStorageContext } from '@/hooks/StorageProvider';
+import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function ProductTab() {
   const { productData, saveProductData } = useStorageContext();
@@ -60,7 +62,7 @@ export default function ProductTab() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={true}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Enzo Cool Calc</Text>
@@ -169,6 +171,11 @@ export default function ProductTab() {
         </View>
 
         {/* Info section removed for cleaner UI */}
+        <BottomNavArrows
+          onLeftPress={() => router.push('/(tabs)/' as any)}
+          onRightPress={() => router.push('/(tabs)/miscellaneous' as any)}
+          isFixed={false}
+        />
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

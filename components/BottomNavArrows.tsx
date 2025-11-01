@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform, KeyboardAvoidingView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, KeyboardAvoidingView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -52,7 +52,6 @@ export const BottomNavArrows: React.FC<BottomNavArrowsProps> = ({
         style={[
           styles.bottomNav,
           { paddingBottom: Math.max(insets.bottom, 8) },
-          isFixed && styles.fixedPosition,
         ]}
       >
         <TouchableOpacity
@@ -62,6 +61,11 @@ export const BottomNavArrows: React.FC<BottomNavArrowsProps> = ({
         >
           <Ionicons name="chevron-back" size={28} color="#2563eb" />
         </TouchableOpacity>
+        
+        <View style={styles.centerTextContainer}>
+          <Text style={styles.footerText}>Powered by Enzo</Text>
+        </View>
+        
         <TouchableOpacity
           style={styles.bottomNavButton}
           onPress={onRightPress}
@@ -80,18 +84,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 32,
-    paddingTop: 12,
-    paddingBottom: 12,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    paddingTop: 32,
+    paddingBottom: 16,
+    marginTop: 24,
+    backgroundColor: 'transparent',
     zIndex: 10,
-  },
-  fixedPosition: {
-    position: 'absolute',
-    bottom: 60,
-    left: 0,
-    right: 0,
   },
   bottomNavButton: {
     padding: 8,
@@ -108,5 +105,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 2,
+  },
+  centerTextContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 16,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });

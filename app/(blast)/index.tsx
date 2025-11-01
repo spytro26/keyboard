@@ -8,9 +8,11 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { InsulationTypePicker } from '@/components/InsulationTypePicker';
 import { useBlastStorageContext } from '@/hooks/BlastStorageProvider';
+import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function BlastRoomDetailsTab() {
     const { roomData, saveRoomData } = useBlastStorageContext();
@@ -49,7 +51,7 @@ export default function BlastRoomDetailsTab() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
                 automaticallyAdjustKeyboardInsets={true}
-                contentContainerStyle={{ paddingBottom: 32 }}
+                contentContainerStyle={{ paddingBottom: 80 }}
             >
                 <View style={styles.content}>
                     <View style={styles.header}>
@@ -206,9 +208,11 @@ export default function BlastRoomDetailsTab() {
 
                     </View>
 
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Powered by Enzo</Text>
-                    </View>
+                    <BottomNavArrows
+                        onLeftPress={() => router.push('/(blast)/results' as any)}
+                        onRightPress={() => router.push('/(blast)/product' as any)}
+                        isFixed={false}
+                    />
                 </View>
             </ScrollView>
             </KeyboardAvoidingView>
@@ -277,17 +281,5 @@ const styles = StyleSheet.create({
         color: '#374151',
         marginTop: 16,
         marginBottom: 12,
-    },
-    footer: {
-        marginTop: 32,
-        paddingTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
-        alignItems: 'center',
-    },
-    footerText: {
-        fontSize: 14,
-        color: '#6b7280',
-        fontStyle: 'italic',
     },
 });

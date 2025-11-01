@@ -3,37 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Tabs, router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomNavArrows } from '@/components/BottomNavArrows';
 
 export default function FreezerTabsLayout() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-
-  const tabRoutes = ['/', '/product', '/miscellaneous', '/results'] as const;
-  const tabTitles = ['Room Details', 'Product', 'Miscellaneous', 'Results'];
-
-  const getTabIndex = (pathname: string) => {
-    if (pathname.includes('/index')) return 0;
-    if (pathname.includes('/product')) return 1;
-    if (pathname.includes('/miscellaneous')) return 2;
-    if (pathname.includes('/results')) return 3;
-    return 0;
-  };
-
-  const getCurrentTabIndex = () => getTabIndex(pathname);
-  const isResultsPage = pathname.includes('/results');
-
-  const navigateToTab = (direction: 'left' | 'right') => {
-    const currentIndex = getCurrentTabIndex();
-    let newIndex;
-    if (direction === 'left') {
-      newIndex = currentIndex > 0 ? currentIndex - 1 : tabRoutes.length - 1;
-    } else {
-      newIndex = currentIndex < tabRoutes.length - 1 ? currentIndex + 1 : 0;
-    }
-
-    router.push(`(freezer)${tabRoutes[newIndex]}` as any);
-  };
 
   return (
     <View style={styles.container}>
@@ -105,13 +78,6 @@ export default function FreezerTabsLayout() {
         />
       </Tabs>
 
-      {!isResultsPage && (
-        <BottomNavArrows
-          onLeftPress={() => navigateToTab('left')}
-          onRightPress={() => navigateToTab('right')}
-          isFixed={true}
-        />
-      )}
       </View>
     </View>
   );
