@@ -88,8 +88,8 @@ export default function SignInScreen() {
             const credential = PhoneAuthProvider.credential(verificationId, code);
             await signInWithCredential(auth, credential);
             
-            console.log('[SignIn] Sign-in successful. Navigating to home.');
-            router.replace('/');
+            console.log('[SignIn] Sign-in successful. Navigating to cold room.');
+            router.replace('/(tabs)' as any);
 
         } catch (e: any) {
             console.error('[SignIn] OTP Verification Failed:', JSON.stringify(e, null, 2));

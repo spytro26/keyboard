@@ -108,7 +108,7 @@ export default function ProductTab() {
           <Text style={styles.sectionTitle}>Product Weight & Processing</Text>
 
           <InputField
-            label="Weight"
+            label="Total Product Capacity"
             value={productData.massBeforeFreezing.toString()}
             onChangeText={(value) => handleNumericChange('massBeforeFreezing', value)}
             unitOptions={['kg', 'lbs']}
@@ -117,12 +117,12 @@ export default function ProductTab() {
           />
 
           <InputField
-            label="Weight for Respiration"
-            value={productData.respirationMass.toString()}
-            onChangeText={(value) => handleNumericChange('respirationMass', value)}
-            unitOptions={['kg', 'lbs']}
-            selectedUnit={productData.massUnit}
-            onUnitChange={(unit) => updateProductData('massUnit', unit as 'kg' | 'lbs')}
+            label="Daily Loading %"
+            value={productData.dailyLoadingPercent?.toString() || '100'}
+            onChangeText={(value) => handleNumericChange('dailyLoadingPercent', value)}
+            unit="%"
+            placeholder="100"
+            keyboardType="decimal-pad"
           />
         </View>
 

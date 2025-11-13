@@ -33,8 +33,11 @@ const defaultRoomData: RoomData = {
 };
 
 const defaultProductData: ProductData = {
-    massBeforeFreezing: 4000, // Excel shows 4000 kg
+    massBeforeFreezing: 4000, // Excel shows 4000 kg - NOW represents TOTAL CAPACITY
     massUnit: 'kg',
+
+    // NEW: Daily Loading Percentage
+    dailyLoadingPercent: 100, // Default 100% - full daily turnover
 
     // Product temperatures - NEW DEFAULT VALUES
     enteringTemp: 30,         // Default entering temperature
@@ -43,7 +46,7 @@ const defaultProductData: ProductData = {
 
     cpAboveFreezing: 4.1,     // Excel shows 4.1 kJ/kg·K
     pullDownHours: 24,        // Excel shows 24 hrs
-    respirationMass: 4000,    // Excel shows 4000 kg (same as mass)
+    respirationMass: 4000,    // Excel shows 4000 kg (will be adjusted by dailyLoadingPercent)
     watts: 50,                // Excel shows 50 W/Tonne
     productName: 'Custom',
     overridePreset: false,
@@ -75,6 +78,16 @@ const defaultMiscData: MiscellaneousData = {
     doorHeaterQuantity: 1,     // Excel D33: 1 door heater
     doorHeaterUsageHours: 20,  // Excel F33: 20 hrs
 
+    // NEW: Relative Humidity Parameters
+    ambientRH: 55,             // Default 55% (base range 50-60%)
+    insideRoomRH: 85,          // Default 85% (base design for chillers/freezers)
+    
+    // NEW: Compressor Operating Hours
+    compressorRunningHours: 18, // Default 18 hrs/day
+
+    // NEW: Door Opening Frequency
+    doorOpeningFrequency: 'low', // Default low frequency
+
     // Temperature parameters (Excel)
     ambientTemp: 45,           // Excel D55: 45°C
     roomTemp: 2,               // Excel D56: 2°C
@@ -86,7 +99,7 @@ const defaultMiscData: MiscellaneousData = {
     doorClearOpeningWidth: 900, // Excel D62: 900 mm - used for door heater calculation
     doorClearOpeningHeight: 2000, // Excel E62: 2000 mm - used for door heater calculation
     doorDimensionUnit: 'mm', // Default unit for door dimensions
-    capacityIncludingSafety: 20, // Default safety factor percentage
+    capacityIncludingSafety: 10, // Default safety factor percentage (changed from 20% to 10%)
     
     // REMOVED UNUSED PARAMETERS:
     // dailyLoading - only used in freezer calculations

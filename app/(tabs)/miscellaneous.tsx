@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { useStorageContext } from '@/hooks/StorageProvider';
 import { BottomNavArrows } from '@/components/BottomNavArrows';
+import DoorOpeningFrequencyPicker from '@/components/DoorOpeningFrequencyPicker';
 
 export default function MiscellaneousTab() {
   const { miscData, saveMiscData } = useStorageContext();
@@ -269,22 +270,11 @@ export default function MiscellaneousTab() {
           />
         </View>
 
-        {/* Compressor Air Load */}
+        {/* Door Opening Frequency */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Compressor Air Load</Text>
-
-          <InputField
-            label="Compressor Power"
-            value={miscData.compressorPowerKW?.toString() || '0'}
-            onChangeText={(value) => handleNumericChange('compressorPowerKW', value)}
-            unit="kW"
-          />
-
-          <InputField
-            label="Compressor Running Hours"
-            value={miscData.compressorAirRunningHours?.toString() || '0'}
-            onChangeText={(value) => handleNumericChange('compressorAirRunningHours', value)}
-            unit="hrs/day"
+          <DoorOpeningFrequencyPicker
+            value={miscData.doorOpeningFrequency || 'low'}
+            onChange={(value) => updateMiscData('doorOpeningFrequency', value)}
           />
         </View>
 
@@ -297,8 +287,8 @@ export default function MiscellaneousTab() {
             onChangeText={(value) => handleNumericChange('capacityIncludingSafety', value)}
             unit="%"
           />
-
         </View>
+
         <BottomNavArrows
           onLeftPress={() => router.push('/(tabs)/product' as any)}
           onRightPress={() => router.push('/(tabs)/results' as any)}
@@ -354,5 +344,12 @@ const styles = StyleSheet.create({
     color: '#1e40af',
     marginBottom: 16,
     textAlign: 'left',
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#64748b',
+    lineHeight: 20,
+    marginTop: 8,
+    fontStyle: 'italic',
   },
 });

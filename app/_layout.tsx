@@ -18,7 +18,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (!user && !inAuthRoutes) {
       router.replace({ pathname: '/sign-in' } as any);
     } else if (user && inAuthRoutes) {
-      router.replace('/');
+      // Navigate to cold room instead of home page
+      router.replace('/(tabs)' as any);
     }
   }, [user, loading, pathname]);
 

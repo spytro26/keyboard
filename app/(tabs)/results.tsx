@@ -29,9 +29,11 @@ export default function ColdRoomResultsTab() {
   const results = calculateHeatLoad(roomData, productData, miscData);
   const baseLoadKw = results.totalLoadKw || 0;
   const safetyFactorPercent = results.safetyFactorPercent ?? miscData.capacityIncludingSafety ?? 20;
-  const safetyMultiplier = 1 + safetyFactorPercent / 100;
-  const loadKwWithSafety = baseLoadKw * safetyMultiplier;
-  const loadBtuHrWithSafety = loadKwWithSafety * 3412;
+  
+  // Use finalCapacity from results which includes door frequency adjustment
+  const finalCapacityTR = results.finalCapacity || 0;
+  const finalCapacityKw = finalCapacityTR * 3.517;
+  const finalCapacityBtuHr = finalCapacityKw * 3412;
 
   const handleSharePDF = async () => {
     setIsGenerating(true);
@@ -44,8 +46,8 @@ export default function ColdRoomResultsTab() {
         userName: getUserDisplayName(), // Use helper function with fallback
         projectName: roomData.projectName,
         finalResults: [
-        { label: 'Total Load', value: loadKwWithSafety.toFixed(1), unit: 'kW' },
-        { label: 'Load', value: loadBtuHrWithSafety.toFixed(0), unit: 'BTU/hr' },
+        { label: 'Total Load', value: finalCapacityKw.toFixed(1), unit: 'kW' },
+        { label: 'Load', value: finalCapacityBtuHr.toFixed(0), unit: 'BTU/hr' },
         { label: 'Safety Factor', value: safetyFactorPercent.toFixed(1), unit: '%' },
       ],
       inputs: [
@@ -219,14 +221,14 @@ export default function ColdRoomResultsTab() {
 
   const ResultCard = ({ title, value, unit, isHighlighted = false }: {
     title: string;
-    value: number | undefined;
+    value: number | string | undefined;
     unit: string;
     isHighlighted?: boolean;
   }) => (
     <View style={[styles.resultCard, isHighlighted && styles.highlightedCard]}>
       <Text style={[styles.resultLabel, isHighlighted && styles.highlightedLabel]}>{title}</Text>
       <Text style={[styles.resultValue, isHighlighted && styles.highlightedValue]}>
-        {value !== undefined ? value.toFixed(1) : '0.0'} <Text style={styles.resultUnit}>{unit}</Text>
+        {value !== undefined ? (typeof value === 'number' ? value.toFixed(1) : value) : '0.0'} <Text style={styles.resultUnit}>{unit}</Text>
       </Text>
     </View>
   );
@@ -276,14 +278,20 @@ export default function ColdRoomResultsTab() {
           {/* Main Results - Highlighted */}
           <SectionCard title="Main Results">
             <ResultCard
-              title={`Total Load (with ${safetyFactorPercent.toFixed(1)}% Safety)`}
-              value={loadKwWithSafety}
+              title="Total Load"
+              value={finalCapacityKw}
               unit="kW"
               isHighlighted={true}
             />
             <ResultCard
-              title="Load in BTU/hr (with safety)"
-              value={loadBtuHrWithSafety}
+              title="Final Capacity"
+              value={finalCapacityTR}
+              unit="TR"
+              isHighlighted={true}
+            />
+            <ResultCard
+              title="Load in BTU/hr"
+              value={finalCapacityBtuHr}
               unit="BTU/hr"
               isHighlighted={true}
             />
@@ -292,6 +300,54 @@ export default function ColdRoomResultsTab() {
               value={safetyFactorPercent}
               unit="%"
               isHighlighted={true}
+            />
+          </SectionCard>
+
+          {/* NEW: Capacity Adjustments */}
+          <SectionCard title="Capacity Adjustments">
+            <ResultCard
+              title="Ambient RH"
+              value={miscData.ambientRH ?? 55}
+              unit="%"
+            />
+            <ResultCard
+              title="Ambient RH Correction (Air Change)"
+              value={1 + 0.05 * (((miscData.ambientRH ?? 55) - 55) / 10)}
+              unit="×"
+            />
+            <ResultCard
+              title="Inside Room RH"
+              value={miscData.insideRoomRH ?? 85}
+              unit="%"
+            />
+            <ResultCard
+              title="Inside RH Correction (Product Load)"
+              value={1 + 0.05 * ((85 - (miscData.insideRoomRH ?? 85)) / 10)}
+              unit="×"
+            />
+            <ResultCard
+              title="Compressor Running Hours"
+              value={miscData.compressorRunningHours ?? 24}
+              unit="hrs/day"
+            />
+            <ResultCard
+              title="Hours Adjustment Factor"
+              value={24 / (miscData.compressorRunningHours ?? 24)}
+              unit="×"
+            />
+            <ResultCard
+              title="Door Opening Frequency"
+              value={
+                results.doorFrequency === 'high' ? 'High' :
+                results.doorFrequency === 'medium' ? 'Medium' :
+                'Low'
+              }
+              unit=""
+            />
+            <ResultCard
+              title="Door Frequency Adjustment"
+              value={results.doorFrequencyMultiplier}
+              unit="×"
             />
           </SectionCard>
 

@@ -152,15 +152,20 @@ export const calculateHeatLoad = (
   const width = convertLength(roomData.width, roomData.lengthUnit, 'm');
   const height = convertLength(roomData.height, roomData.lengthUnit, 'm');
 
-  const productMass = convertMass(
+  // Apply Daily Loading % to total capacity
+  const totalCapacityKg = convertMass(
     productData.massBeforeFreezing,
     productData.massUnit,
     'kg'
   );
-  const respirationMassKg = convertMass(
-    productData.respirationMass,
-    productData.massUnit,
-    'kg'
+  const dailyLoadingPercent = productData.dailyLoadingPercent ?? 100;
+  const productMass = (totalCapacityKg * dailyLoadingPercent) / 100;
+  const respirationMassKg = (totalCapacityKg * dailyLoadingPercent) / 100;
+
+  console.log(
+    `[Daily Loading] Total Capacity: ${totalCapacityKg} kg, Daily Loading: ${dailyLoadingPercent}%, Actual Mass: ${productMass.toFixed(
+      2
+    )} kg`
   );
 
   // Convert temperatures to Celsius for calculation
@@ -231,11 +236,28 @@ export const calculateHeatLoad = (
 
   // PRODUCT LOAD (kJ/24Hr) - EXACT Excel formula
   // Excel: =(C14*D14*E14)*(24/F14) = (Mass * Cp * TempDiff) * (24/PullDownHrs)
-  const productLoad =
+  const productLoadBase =
     productMass *
     productData.cpAboveFreezing *
     productTempDiff *
     (24 / productData.pullDownHours);
+
+  // NEW: Apply Inside RH Correction to Product Load
+  // Formula: Q_adj,RH_in = Q_base × [1 + k × (RH_ref - RH_in) / 10]
+  // Where: RH_ref = 85%, k = 0.05 (5% per 10% RH change)
+  const insideRH = miscData.insideRoomRH ?? 85;
+  const RH_ref_inside = 85;
+  const k_inside = 0.05;
+  const rhCorrectionInside = 1 + k_inside * ((RH_ref_inside - insideRH) / 10);
+  const productLoad = productLoadBase * rhCorrectionInside;
+
+  console.log(
+    `[RH Correction - Product Load] Base: ${productLoadBase.toFixed(
+      2
+    )} kJ/24hr, Inside RH: ${insideRH}%, Correction Factor: ${rhCorrectionInside.toFixed(
+      4
+    )}, Adjusted: ${productLoad.toFixed(2)} kJ/24hr`
+  );
 
   // RESPIRATION LOAD (kJ/24Hr) - EXACT Excel formula
   // Excel: =(C17*D17*3.6*24/1000) = (Mass * Watts/Tonne * 3.6 * 24) / 1000
@@ -244,11 +266,29 @@ export const calculateHeatLoad = (
 
   // AIR CHANGE LOAD (kJ/24Hr) - EXACT Excel formula
   // Excel: =C21*D21*3600*F21 = Air change rate * Enthalpy diff * 3600 * Hours
-  const airChangeLoad =
+  const airChangeLoadBase =
     miscData.airChangeRate *
     miscData.enthalpyDiff *
     3600 *
     miscData.hoursOfLoad;
+
+  // NEW: Apply Ambient RH Correction to Air Change Load
+  // Formula: Q_adj,RH_ambient = Q_base × [1 + k × (RH_ambient - RH_ref) / 10]
+  // Where: RH_ref = 55% (midpoint of 50-60% base), k = 0.05 (5% per 10% RH change)
+  const ambientRH = miscData.ambientRH ?? 55;
+  const RH_ref_ambient = 55;
+  const k_ambient = 0.05;
+  const rhCorrectionAmbient =
+    1 + k_ambient * ((ambientRH - RH_ref_ambient) / 10);
+  const airChangeLoad = airChangeLoadBase * rhCorrectionAmbient;
+
+  console.log(
+    `[RH Correction - Air Change Load] Base: ${airChangeLoadBase.toFixed(
+      2
+    )} kJ/24hr, Ambient RH: ${ambientRH}%, Correction Factor: ${rhCorrectionAmbient.toFixed(
+      4
+    )}, Adjusted: ${airChangeLoad.toFixed(2)} kJ/24hr`
+  );
 
   // EQUIPMENT LOAD (kJ/24Hr) - EXACT Excel formula
   // Excel: =(C25*D25*3600*F25) = Fan Rating * Quantity * 3600 * Hours
@@ -292,15 +332,8 @@ export const calculateHeatLoad = (
     3600 *
     miscData.doorHeaterUsageHours;
 
-  // COMPRESSOR AIR LOAD (kJ/24Hr)
-  // Formula: =Compressor Power (kW) × Running Hours × 3600
-  const compressorLoad =
-    (miscData.compressorPowerKW || 0) *
-    (miscData.compressorAirRunningHours || 0) *
-    3600;
-
   const totalMiscLoad =
-    equipmentLoad + occupancyLoad + lightLoad + doorHeaterLoad + compressorLoad;
+    equipmentLoad + occupancyLoad + lightLoad + doorHeaterLoad;
 
   // TOTAL LOAD CALCULATIONS - EXACT Excel formulas
   const totalLoadKJ =
@@ -313,11 +346,25 @@ export const calculateHeatLoad = (
     equipmentLoad +
     occupancyLoad +
     lightLoad +
-    doorHeaterLoad +
-    compressorLoad;
+    doorHeaterLoad;
 
   // Convert to kW (Excel: G41 = G40/(24*3600))
-  const totalLoadKw = totalLoadKJ / (24 * 3600);
+  const totalLoadKwBase = totalLoadKJ / (24 * 3600);
+
+  // NEW: Apply Compressor Running Hours Adjustment
+  // Formula: Q_adjusted = Q_total × (24 / Compressor running hours)
+  // If compressor runs fewer hours, capacity must be higher to meet same daily load
+  const compressorHours = miscData.compressorRunningHours ?? 18;
+  const hoursAdjustmentFactor = 24 / compressorHours;
+  const totalLoadKw = totalLoadKwBase * hoursAdjustmentFactor;
+
+  console.log(
+    `[Compressor Hours Adjustment] Base Load: ${totalLoadKwBase.toFixed(
+      2
+    )} kW, Running Hours: ${compressorHours} hrs/day, Adjustment Factor: ${hoursAdjustmentFactor.toFixed(
+      4
+    )}, Adjusted Load: ${totalLoadKw.toFixed(2)} kW`
+  );
 
   // Refrigeration capacity in TR (Excel: G42 = G41/3.517)
   const refrigerationCapacityTR = totalLoadKw / 3.517;
@@ -326,6 +373,20 @@ export const calculateHeatLoad = (
   const safetyFactorPercent = miscData.capacityIncludingSafety ?? 20;
   const capacityIncludingSafety =
     (refrigerationCapacityTR * (100 + safetyFactorPercent)) / 100;
+
+  // NEW: Apply door opening frequency adjustment AFTER safety factor
+  // Low: 0% (1.0x), Medium: +5% (1.05x), High: +10% (1.10x)
+  const doorFrequency = miscData.doorOpeningFrequency || 'low';
+  const doorFrequencyMultiplier =
+    doorFrequency === 'high' ? 1.1 : doorFrequency === 'medium' ? 1.05 : 1.0;
+  const finalCapacity = capacityIncludingSafety * doorFrequencyMultiplier;
+
+  console.log('🚪 Door frequency adjustment:', {
+    doorFrequency,
+    multiplier: doorFrequencyMultiplier,
+    capacityBeforeDoor: capacityIncludingSafety.toFixed(3),
+    finalCapacity: finalCapacity.toFixed(3),
+  });
 
   // Individual TR calculations (Excel: =G8/(3600*3.517*24))
   const trConversionFactor = 3600 * 3.517 * 24;
@@ -339,7 +400,6 @@ export const calculateHeatLoad = (
   const occupancyLoadTR = occupancyLoad / trConversionFactor;
   const lightLoadTR = lightLoad / trConversionFactor;
   const doorHeaterLoadTR = doorHeaterLoad / trConversionFactor;
-  const compressorLoadTR = compressorLoad / trConversionFactor;
   const totalLoadTR =
     wallLoadTR +
     ceilingLoadTR +
@@ -350,8 +410,7 @@ export const calculateHeatLoad = (
     equipmentLoadTR +
     occupancyLoadTR +
     lightLoadTR +
-    doorHeaterLoadTR +
-    compressorLoadTR;
+    doorHeaterLoadTR;
 
   // Sensible and Latent Heat (Excel: G44, G45, G46)
   // For cold room, sensible heat includes most loads, latent heat is minimal
@@ -363,8 +422,7 @@ export const calculateHeatLoad = (
     equipmentLoad +
     occupancyLoad +
     lightLoad +
-    doorHeaterLoad +
-    compressorLoad;
+    doorHeaterLoad;
   const latentHeat = respirationLoad + airChangeLoad;
   const sensibleHeatRatio = sensibleHeat / totalLoadKJ;
 
@@ -396,7 +454,6 @@ export const calculateHeatLoad = (
     occupancyLoad,
     lightLoad,
     doorHeaterLoad,
-    compressorLoad,
     totalMiscLoad,
 
     // Final results
@@ -404,7 +461,10 @@ export const calculateHeatLoad = (
     totalLoadKw,
     refrigerationCapacityTR,
     capacityIncludingSafety,
+    finalCapacity,
     safetyFactorPercent,
+    doorFrequency,
+    doorFrequencyMultiplier,
 
     // Sensible and Latent Heat
     sensibleHeat,
@@ -425,7 +485,6 @@ export const calculateHeatLoad = (
     occupancyLoadTR,
     lightLoadTR,
     doorHeaterLoadTR,
-    compressorLoadTR,
     totalLoadTR,
 
     // Temperature differences
@@ -451,21 +510,21 @@ export const calculateFreezerHeatLoad = (
   const width = convertLength(roomData.width, roomData.lengthUnit, 'm');
   const height = convertLength(roomData.height, roomData.lengthUnit, 'm');
 
-  // Convert product masses to kg for calculation
-  const productMass = convertMass(
+  // Apply Daily Loading % to total capacity
+  const totalCapacityKg = convertMass(
     productData.massBeforeFreezing,
     productData.massUnit,
     'kg'
   );
-  const dailyLoadingKg = convertMass(
-    (miscData as any).dailyLoading || productData.massBeforeFreezing,
-    productData.massUnit,
-    'kg'
-  );
-  const respirationMassKg = convertMass(
-    productData.respirationMass,
-    productData.massUnit,
-    'kg'
+  const dailyLoadingPercent = productData.dailyLoadingPercent ?? 100;
+  const productMass = (totalCapacityKg * dailyLoadingPercent) / 100;
+  const dailyLoadingKg = productMass; // For freezer, daily loading = actual mass being processed
+  const respirationMassKg = (totalCapacityKg * dailyLoadingPercent) / 100;
+
+  console.log(
+    `[Freezer - Daily Loading] Total Capacity: ${totalCapacityKg} kg, Daily Loading: ${dailyLoadingPercent}%, Actual Mass: ${productMass.toFixed(
+      2
+    )} kg`
   );
 
   // Convert temperatures to Celsius for calculation
@@ -655,20 +714,12 @@ export const calculateFreezerHeatLoad = (
   // Steam humidifiers: Excel shows 0 for freezer
   const steamHumidifierLoad = 0;
 
-  // COMPRESSOR AIR LOAD (kJ/24Hr)
-  // Formula: =Compressor Power (kW) × Running Hours × 3600
-  const compressorLoad =
-    ((miscData as any).compressorPowerKW || 0) *
-    ((miscData as any).compressorAirRunningHours || 0) *
-    3600;
-
   const totalMiscLoad =
     equipmentLoad +
     occupancyLoad +
     lightLoad +
     heaterLoad +
-    steamHumidifierLoad +
-    compressorLoad;
+    steamHumidifierLoad;
 
   // TOTAL LOAD CALCULATIONS - EXACT Excel formulas
   const totalLoadKJ =
@@ -689,6 +740,20 @@ export const calculateFreezerHeatLoad = (
   const capacityTR =
     (refrigerationCapacityTR * (100 + safetyFactorPercent)) / 100;
 
+  // NEW: Apply door opening frequency adjustment AFTER safety factor
+  // Low: 0% (1.0x), Medium: +5% (1.05x), High: +10% (1.10x)
+  const doorFrequency = miscData.doorOpeningFrequency || 'low';
+  const doorFrequencyMultiplier =
+    doorFrequency === 'high' ? 1.1 : doorFrequency === 'medium' ? 1.05 : 1.0;
+  const finalCapacity = capacityTR * doorFrequencyMultiplier;
+
+  console.log('🚪 [Freezer] Door frequency adjustment:', {
+    doorFrequency,
+    multiplier: doorFrequencyMultiplier,
+    capacityBeforeDoor: capacityTR.toFixed(3),
+    finalCapacity: finalCapacity.toFixed(3),
+  });
+
   // Individual TR calculations (Excel: =G8/(3600*3.517*24))
   const trConversionFactor = 3600 * 3.517 * 24;
   const wallLoadTR = wallLoad / trConversionFactor;
@@ -701,7 +766,6 @@ export const calculateFreezerHeatLoad = (
   const occupancyLoadTR = occupancyLoad / trConversionFactor;
   const lightLoadTR = lightLoad / trConversionFactor;
   const heaterLoadTR = heaterLoad / trConversionFactor;
-  const compressorLoadTR = compressorLoad / trConversionFactor;
   const totalLoadTR =
     wallLoadTR +
     ceilingLoadTR +
@@ -712,8 +776,7 @@ export const calculateFreezerHeatLoad = (
     equipmentLoadTR +
     occupancyLoadTR +
     lightLoadTR +
-    heaterLoadTR +
-    compressorLoadTR;
+    heaterLoadTR;
 
   // Sensible and Latent Heat (Excel: G44, G45, G46)
   const sensibleHeat =
@@ -723,8 +786,7 @@ export const calculateFreezerHeatLoad = (
     equipmentLoad +
     occupancyLoad +
     lightLoad +
-    heaterLoad +
-    compressorLoad;
+    heaterLoad;
   const latentHeat = respirationLoad + airChangeLoad;
   const sensibleHeatRatio = sensibleHeat / totalLoadKJ;
 
@@ -760,13 +822,15 @@ export const calculateFreezerHeatLoad = (
     lightLoad: lightLoad / 1000,
     doorHeaterLoad:
       (doorHeatersLoad + trayHeatersLoad + drainHeatersLoad) / 1000, // Combined heater loads
-    compressorLoad: compressorLoad / 1000,
     totalMiscLoad: totalMiscLoad / 1000,
     totalLoadKJ,
     totalLoadKw,
     refrigerationCapacityTR,
     capacityIncludingSafety: capacityTR,
+    finalCapacity,
     safetyFactorPercent,
+    doorFrequency,
+    doorFrequencyMultiplier,
     sensibleHeat: sensibleHeat / 1000,
     latentHeat: latentHeat / 1000,
     sensibleHeatRatio,
@@ -783,7 +847,6 @@ export const calculateFreezerHeatLoad = (
     occupancyLoadTR,
     lightLoadTR,
     doorHeaterLoadTR: heaterLoadTR,
-    compressorLoadTR,
     totalLoadTR,
 
     // Temperature differences
@@ -981,13 +1044,6 @@ export const calculateBlastHeatLoad = (
     3600 *
     miscData.drainHeaterHours;
 
-  // COMPRESSOR AIR LOAD (kJ/24Hr)
-  // Formula: =Compressor Power (kW) × Running Hours × 3600
-  const compressorLoad =
-    (miscData.compressorPowerKW || 0) *
-    (miscData.compressorAirRunningHours || 0) *
-    3600;
-
   const totalMiscLoad =
     equipmentLoad +
     occupancyLoad +
@@ -995,8 +1051,7 @@ export const calculateBlastHeatLoad = (
     peripheralHeaterLoad +
     doorHeaterLoad +
     trayHeaterLoad +
-    drainHeaterLoad +
-    compressorLoad;
+    drainHeaterLoad;
 
   // FINAL CALCULATIONS - Excel formulas G36, G37, G38, G39, G40, G41, G42, G43
   // Excel G36: =SUM(G8:G34) = 24059+8592+6940+(-23034)+466000+121124+4233.6+31968+1800+0.432+43200+7776+3168+1152 = 696925 kJ
@@ -1013,6 +1068,20 @@ export const calculateBlastHeatLoad = (
   const safetyFactorPercent = miscData.capacityIncludingSafety ?? 20;
   const refrigerationCapacity =
     (totalLoadTR * (100 + safetyFactorPercent)) / 100;
+
+  // NEW: Apply door opening frequency adjustment AFTER safety factor
+  // Low: 0% (1.0x), Medium: +5% (1.05x), High: +10% (1.10x)
+  const doorFrequency = miscData.doorOpeningFrequency || 'low';
+  const doorFrequencyMultiplier =
+    doorFrequency === 'high' ? 1.1 : doorFrequency === 'medium' ? 1.05 : 1.0;
+  const finalCapacity = refrigerationCapacity * doorFrequencyMultiplier;
+
+  console.log('🚪 [Blast] Door frequency adjustment:', {
+    doorFrequency,
+    multiplier: doorFrequencyMultiplier,
+    capacityBeforeDoor: refrigerationCapacity.toFixed(3),
+    finalCapacity: finalCapacity.toFixed(3),
+  });
 
   // Excel G40: =SUM(G8:G14)+SUM(G16:G17)+0.4*C (simplified)
   const sensibleHeatKJ24Hr =
@@ -1047,7 +1116,6 @@ export const calculateBlastHeatLoad = (
   const doorHeaterLoadTR = doorHeaterLoad / trConversionFactor;
   const trayHeaterLoadTR = trayHeaterLoad / trConversionFactor;
   const drainHeaterLoadTR = drainHeaterLoad / trConversionFactor;
-  const compressorLoadTR = compressorLoad / trConversionFactor;
 
   return {
     wallLoad,
@@ -1066,13 +1134,15 @@ export const calculateBlastHeatLoad = (
     doorHeaterLoad,
     trayHeaterLoad,
     drainHeaterLoad,
-    compressorLoad,
     totalMiscLoad,
     totalLoadKJ,
     totalLoadKw,
     totalLoadTR,
     capacityIncludingSafety: refrigerationCapacity,
+    finalCapacity,
     safetyFactorPercent,
+    doorFrequency,
+    doorFrequencyMultiplier,
     sensibleHeatKJ24Hr,
     latentHeatKJ24Hr,
     shr,
@@ -1093,6 +1163,5 @@ export const calculateBlastHeatLoad = (
     doorHeaterLoadTR,
     trayHeaterLoadTR,
     drainHeaterLoadTR,
-    compressorLoadTR,
   };
 };

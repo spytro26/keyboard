@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { useBlastStorageContext } from '@/hooks/BlastStorageProvider';
 import { BottomNavArrows } from '@/components/BottomNavArrows';
+import DoorOpeningFrequencyPicker from '@/components/DoorOpeningFrequencyPicker';
 
 export default function BlastMiscellaneousTab() {
     const { miscData, saveMiscData } = useBlastStorageContext();
@@ -321,6 +322,18 @@ export default function BlastMiscellaneousTab() {
                         />
                     </View>
 
+                    {/* NEW: Door Opening Frequency */}
+                    <View style={styles.section}>
+                        <DoorOpeningFrequencyPicker
+                            value={miscData.doorOpeningFrequency || 'low'}
+                            onChange={(value) => handleStringChange('doorOpeningFrequency', value)}
+                        />
+                        
+                        <Text style={styles.infoText}>
+                            💡 Frequent door openings increase infiltration load. The adjustment is applied to the final capacity after the safety factor.
+                        </Text>
+                    </View>
+
                     <BottomNavArrows
                         onLeftPress={() => router.push('/(blast)/product' as any)}
                         onRightPress={() => router.push('/(blast)/results' as any)}
@@ -395,5 +408,11 @@ const styles = StyleSheet.create({
         color: '#374151',
         marginBottom: 12,
         marginTop: 16,
+    },
+    infoText: {
+        fontSize: 13,
+        color: '#64748b',
+        lineHeight: 18,
+        marginTop: 8,
     },
 });

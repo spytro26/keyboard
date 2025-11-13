@@ -29,9 +29,11 @@ export default function FreezerResultsTab() {
   const results = calculateFreezerHeatLoad(roomData, productData, miscData);
   const baseLoadKw = results.totalLoadKw || 0;
   const safetyFactorPercent = results.safetyFactorPercent ?? miscData.capacityIncludingSafety ?? 20;
-  const safetyMultiplier = 1 + safetyFactorPercent / 100;
-  const loadKwWithSafety = baseLoadKw * safetyMultiplier;
-  const loadBtuHrWithSafety = loadKwWithSafety * 3412;
+  
+  // Use finalCapacity from results which includes door frequency adjustment
+  const finalCapacityTR = results.finalCapacity || 0;
+  const finalCapacityKw = finalCapacityTR * 3.517;
+  const finalCapacityBtuHr = finalCapacityKw * 3412;
 
   const handleSharePDF = async () => {
     setIsGenerating(true);
@@ -44,8 +46,8 @@ export default function FreezerResultsTab() {
         userName: getUserDisplayName(), // Use helper function with fallback
         projectName: roomData.projectName,
         finalResults: [
-          { label: 'Total Load', value: loadKwWithSafety.toFixed(1), unit: 'kW' },
-          { label: 'Load', value: loadBtuHrWithSafety.toFixed(0), unit: 'BTU/hr' },
+          { label: 'Total Load', value: finalCapacityKw.toFixed(1), unit: 'kW' },
+          { label: 'Load', value: finalCapacityBtuHr.toFixed(0), unit: 'BTU/hr' },
           { label: 'Safety Factor', value: safetyFactorPercent.toFixed(1), unit: '%' },
         ],
         inputs: [
@@ -221,14 +223,14 @@ export default function FreezerResultsTab() {
 
   const ResultCard = ({ title, value, unit, isHighlighted = false }: {
     title: string;
-    value: number | undefined;
+    value: number | string | undefined;
     unit: string;
     isHighlighted?: boolean;
   }) => (
     <View style={[styles.resultCard, isHighlighted && styles.highlightedCard]}>
       <Text style={[styles.resultLabel, isHighlighted && styles.highlightedLabel]}>{title}</Text>
       <Text style={[styles.resultValue, isHighlighted && styles.highlightedValue]}>
-        {(value || 0).toFixed(1)} <Text style={styles.resultUnit}>{unit}</Text>
+        {value !== undefined ? (typeof value === 'number' ? value.toFixed(1) : value) : '0.0'} <Text style={styles.resultUnit}>{unit}</Text>
       </Text>
     </View>
   );
@@ -278,14 +280,20 @@ export default function FreezerResultsTab() {
           {/* Main Results - Highlighted */}
           <SectionCard title="Main Results">
             <ResultCard
-              title={`Total Load (with ${safetyFactorPercent.toFixed(1)}% Safety)`}
-              value={loadKwWithSafety}
+              title={`Final Capacity (TR)`}
+              value={finalCapacityTR}
+              unit="TR"
+              isHighlighted={true}
+            />
+            <ResultCard
+              title={`Total Load (with ${safetyFactorPercent.toFixed(1)}% Safety + Door Adj.)`}
+              value={finalCapacityKw}
               unit="kW"
               isHighlighted={true}
             />
             <ResultCard
-              title="Load in BTU/hr (with safety)"
-              value={loadBtuHrWithSafety}
+              title="Load in BTU/hr"
+              value={finalCapacityBtuHr}
               unit="BTU/hr"
               isHighlighted={true}
             />
@@ -293,7 +301,24 @@ export default function FreezerResultsTab() {
               title="Safety Factor"
               value={safetyFactorPercent}
               unit="%"
-              isHighlighted={true}
+            />
+          </SectionCard>
+
+          {/* Door Opening Frequency Adjustment */}
+          <SectionCard title="Door Opening Adjustment">
+            <ResultCard
+              title="Door Opening Frequency"
+              value={
+                results.doorFrequency === 'high' ? 'High' :
+                results.doorFrequency === 'medium' ? 'Medium' :
+                'Low'
+              }
+              unit=""
+            />
+            <ResultCard
+              title="Door Frequency Multiplier"
+              value={results.doorFrequencyMultiplier}
+              unit="×"
             />
           </SectionCard>
 

@@ -11,12 +11,10 @@ export default function ColdRoomTabsLayout() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12, paddingBottom: 12 }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1e40af" />
-        </TouchableOpacity>
+        {/* Back button hidden - user should not navigate back to home page */}
+        <View style={styles.backButton}>
+          {/* Empty placeholder to maintain header layout */}
+        </View>
         <Text style={styles.headerTitle}>Cold Room Calculator</Text>
         <View style={styles.spacer} />
       </View>

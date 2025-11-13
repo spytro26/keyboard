@@ -33,7 +33,7 @@ const defaultFreezerRoomData: RoomData = {
 };
 
 const defaultFreezerProductData: FreezerProductData = {
-    massBeforeFreezing: 3000, // Excel shows 3000 kg
+    massBeforeFreezing: 3000, // Total Product Capacity (Excel shows 3000 kg)
     massUnit: 'kg',
     enteringTemp: 25,          // Product entering temp (Excel shows 25°C)
     finalTemp: -15,            // Product final temp (Excel shows -15°C)
@@ -43,10 +43,11 @@ const defaultFreezerProductData: FreezerProductData = {
     latentHeatOfFusion: 233,   // Excel shows 233 kJ/kg latent heat (Chicken)
     freezingPoint: -0.8,       // Excel shows -0.8°C freezing point (Chicken)
     pullDownHours: 10,         // Excel shows 10 hrs for freezing process
-    respirationMass: 3000,     // Same as mass
+    respirationMass: 3000,     // Will be adjusted by dailyLoadingPercent
     watts: 0,                  // Excel shows 0 W/tonne for frozen products
     productName: 'Chicken',    // Excel shows Chicken as the product
     overridePreset: false,
+    dailyLoadingPercent: 100,  // Default 100% - Percentage of total capacity loaded per day
 };
 
 const defaultFreezerMiscData: FreezerMiscellaneousData = {
@@ -54,7 +55,17 @@ const defaultFreezerMiscData: FreezerMiscellaneousData = {
     airChangeRate: 4.2,        // Excel shows 4.2 L/S air change rate
     enthalpyDiff: 0.14,        // Excel shows 0.14 kJ/L enthalpy difference
     hoursOfLoad: 16,           // Excel shows 16 hrs of load
-    capacityIncludingSafety: 20, // Default safety factor percentage
+    capacityIncludingSafety: 10, // Default safety factor percentage (changed from 20% to 10%)
+
+    // NEW: Relative Humidity Parameters (inherited from MiscellaneousData)
+    ambientRH: 55,             // Default 55% (base range 50-60%)
+    insideRoomRH: 85,          // Default 85% (base design for chillers/freezers)
+    
+    // NEW: Compressor Operating Hours (inherited from MiscellaneousData)
+    compressorRunningHours: 18, // Default 18 hrs/day
+
+    // NEW: Door Opening Frequency (inherited from MiscellaneousData)
+    doorOpeningFrequency: 'low', // Default low frequency
 
     // Equipment - Excel values (will be overridden by specific calculations)
     equipmentPower: 1110,      // Total fan motor power = 0.37 * 3 * 1000 = 1110W

@@ -11,6 +11,7 @@ import {
 import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { InsulationTypePicker } from '@/components/InsulationTypePicker';
+import InsulationThicknessPicker from '@/components/InsulationThicknessPicker';
 import { useStorageContext } from '@/hooks/StorageProvider';
 import { BottomNavArrows } from '@/components/BottomNavArrows';
 
@@ -38,17 +39,22 @@ export default function RoomDetailsTab() {
     updateRoomData(field, numValue);
   };
 
-  const handleInsulationChange = (field: 'wallInsulationThickness' | 'ceilingInsulationThickness' | 'floorInsulationThickness', value: string) => {
-    const numValue = parseFloat(value) || 0;
-    updateRoomData(field, numValue);
-  };
-
   const updateMiscData = (field: string, value: string | number) => {
     const newData = { ...miscData, [field]: value };
     saveMiscData(newData);
   };
 
   const handleTemperatureChange = (field: 'ambientTemp' | 'roomTemp', value: string) => {
+    const numValue = parseFloat(value) || 0;
+    updateMiscData(field, numValue);
+  };
+
+  const handleRHChange = (field: 'ambientRH' | 'insideRoomRH', value: string) => {
+    const numValue = parseFloat(value) || 0;
+    updateMiscData(field, numValue);
+  };
+
+  const handleNumericChange = (field: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     updateMiscData(field, numValue);
   };
@@ -145,6 +151,40 @@ export default function RoomDetailsTab() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Compressor Running Hours</Text>
+
+          <InputField
+            label="Compressor Running Hours"
+            value={miscData.compressorRunningHours?.toString() || '18'}
+            onChangeText={(value) => handleNumericChange('compressorRunningHours', value)}
+            unit="hrs/day"
+            placeholder="18"
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Humidity Settings</Text>
+          
+          <InputField
+            label="Ambient Relative Humidity"
+            value={miscData.ambientRH.toString()}
+            onChangeText={(value) => handleRHChange('ambientRH', value)}
+            keyboardType="decimal-pad"
+            unit="%"
+            placeholder="55"
+          />
+
+          <InputField
+            label="Inside Room Relative Humidity"
+            value={miscData.insideRoomRH.toString()}
+            onChangeText={(value) => handleRHChange('insideRoomRH', value)}
+            keyboardType="decimal-pad"
+            unit="%"
+            placeholder="85"
+          />
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Insulation Parameters</Text>
 
           <Text style={styles.subsectionTitle}>Insulation Type</Text>
@@ -153,26 +193,23 @@ export default function RoomDetailsTab() {
             onSelect={(type) => updateRoomData('insulationType', type)}
           />
 
-          <Text style={styles.subsectionTitle}>Insulation Thickness (mm)</Text>
-          <InputField
+          <Text style={styles.subsectionTitle}>Insulation Thickness</Text>
+          <InsulationThicknessPicker
             label="Wall Insulation Thickness"
-            value={roomData.wallInsulationThickness.toString()}
-            onChangeText={(value) => handleInsulationChange('wallInsulationThickness', value)}
-            unit="mm"
+            value={roomData.wallInsulationThickness}
+            onChange={(value) => updateRoomData('wallInsulationThickness', value)}
           />
 
-          <InputField
+          <InsulationThicknessPicker
             label="Ceiling Insulation Thickness"
-            value={roomData.ceilingInsulationThickness.toString()}
-            onChangeText={(value) => handleInsulationChange('ceilingInsulationThickness', value)}
-            unit="mm"
+            value={roomData.ceilingInsulationThickness}
+            onChange={(value) => updateRoomData('ceilingInsulationThickness', value)}
           />
 
-          <InputField
+          <InsulationThicknessPicker
             label="Floor Insulation Thickness"
-            value={roomData.floorInsulationThickness.toString()}
-            onChangeText={(value) => handleInsulationChange('floorInsulationThickness', value)}
-            unit="mm"
+            value={roomData.floorInsulationThickness}
+            onChange={(value) => updateRoomData('floorInsulationThickness', value)}
           />
         </View>
 

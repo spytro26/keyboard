@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, KeyboardAvoidingView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +11,8 @@ interface BottomNavArrowsProps {
   contentHeight?: number; // optional content height
   containerHeight?: number; // optional container height
 }
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const BottomNavArrows: React.FC<BottomNavArrowsProps> = ({
   onLeftPress,
@@ -44,37 +46,36 @@ export const BottomNavArrows: React.FC<BottomNavArrowsProps> = ({
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'position' : 'height'}
-      keyboardVerticalOffset={0}
+    <View
+      style={[
+        styles.bottomNav,
+        { 
+          paddingBottom: Math.max(insets.bottom + 8, 16),
+          // Add extra padding for smaller devices to prevent overlap
+          paddingTop: SCREEN_HEIGHT < 700 ? 20 : 32,
+        },
+      ]}
     >
-      <View
-        style={[
-          styles.bottomNav,
-          { paddingBottom: Math.max(insets.bottom, 8) },
-        ]}
+      <TouchableOpacity
+        style={styles.bottomNavButton}
+        onPress={onLeftPress}
+        accessibilityLabel="Previous section"
       >
-        <TouchableOpacity
-          style={styles.bottomNavButton}
-          onPress={onLeftPress}
-          accessibilityLabel="Previous section"
-        >
-          <Ionicons name="chevron-back" size={28} color="#2563eb" />
-        </TouchableOpacity>
-        
-        <View style={styles.centerTextContainer}>
-          <Text style={styles.footerText}>Powered by Enzo</Text>
-        </View>
-        
-        <TouchableOpacity
-          style={styles.bottomNavButton}
-          onPress={onRightPress}
-          accessibilityLabel="Next section"
-        >
-          <Ionicons name="chevron-forward" size={28} color="#2563eb" />
-        </TouchableOpacity>
+        <Ionicons name="chevron-back" size={28} color="#2563eb" />
+      </TouchableOpacity>
+      
+      <View style={styles.centerTextContainer}>
+        <Text style={styles.footerText}>Powered by Enzo</Text>
       </View>
-    </KeyboardAvoidingView>
+      
+      <TouchableOpacity
+        style={styles.bottomNavButton}
+        onPress={onRightPress}
+        accessibilityLabel="Next section"
+      >
+        <Ionicons name="chevron-forward" size={28} color="#2563eb" />
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -83,12 +84,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 32,
-    paddingTop: 32,
-    paddingBottom: 16,
-    marginTop: 24,
+    paddingHorizontal: SCREEN_HEIGHT < 700 ? 20 : 32,
+    marginTop: SCREEN_HEIGHT < 700 ? 16 : 24,
     backgroundColor: 'transparent',
-    zIndex: 10,
+    // Position at bottom of content, not absolutely positioned
+    alignSelf: 'stretch',
   },
   bottomNavButton: {
     padding: 8,
@@ -111,11 +111,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 16,
+    // Ensure text doesn't overlap with buttons
+    minHeight: 48,
   },
   footerText: {
     fontSize: 14,
     color: '#6b7280',
     fontStyle: 'italic',
     textAlign: 'center',
+    // Ensure text wraps on smaller devices
+    flexWrap: 'wrap',
   },
 });

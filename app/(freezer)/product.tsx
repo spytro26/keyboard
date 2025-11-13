@@ -138,12 +138,21 @@ export default function FreezerProductTab() {
           <Text style={styles.sectionTitle}>Product Weight & Processing</Text>
 
           <InputField
-            label="Daily Loading"
-            value={miscData.dailyLoading?.toString() || ''}
-            onChangeText={(value) => handleValueChange('dailyLoading', value)}
+            label="Total Product Capacity"
+            value={productData.massBeforeFreezing.toString()}
+            onChangeText={(value) => handleValueChange('massBeforeFreezing', value)}
             unitOptions={['kg', 'lbs']}
             selectedUnit={productData.massUnit}
             onUnitChange={(unit) => handleUnitChange('massUnit', unit)}
+          />
+
+          <InputField
+            label="Daily Loading %"
+            value={productData.dailyLoadingPercent?.toString() || '100'}
+            onChangeText={(value) => handleValueChange('dailyLoadingPercent', value)}
+            unit="%"
+            placeholder="100"
+            keyboardType="decimal-pad"
           />
         </View>
 

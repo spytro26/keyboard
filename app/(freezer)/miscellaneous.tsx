@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { InputField } from '@/components/InputField';
 import { useFreezerStorageContext } from '@/hooks/FreezerStorageProvider';
 import { BottomNavArrows } from '@/components/BottomNavArrows';
+import DoorOpeningFrequencyPicker from '@/components/DoorOpeningFrequencyPicker';
 
 export default function FreezerMiscellaneousTab() {
   const { miscData, saveMiscData } = useFreezerStorageContext();
@@ -296,6 +297,18 @@ export default function FreezerMiscellaneousTab() {
             onChangeText={(value) => handleValueChange('capacityIncludingSafety', value)}
             unit="%"
           />
+        </View>
+
+        {/* NEW: Door Opening Frequency */}
+        <View style={styles.section}>
+          <DoorOpeningFrequencyPicker
+            value={miscData.doorOpeningFrequency || 'low'}
+            onChange={(value) => updateMiscData('doorOpeningFrequency', value)}
+          />
+          
+          <Text style={styles.infoText}>
+            💡 Frequent door openings increase infiltration load. The adjustment is applied to the final capacity after the safety factor.
+          </Text>
         </View>
 
         <BottomNavArrows

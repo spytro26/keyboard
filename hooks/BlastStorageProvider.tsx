@@ -105,6 +105,9 @@ export interface BlastMiscellaneousData {
     compressorPowerKW?: number;        // Compressor power in kW
     compressorAirRunningHours?: number; // Compressor running hours per day
 
+    // Door Opening Frequency - affects final capacity
+    doorOpeningFrequency: 'low' | 'medium' | 'high'; // Door opening frequency
+
     // Unit preferences
     volumeUnit: 'm³' | 'ft³';         // Volume unit preference
     capacityIncludingSafety: number;  // Safety factor percentage
@@ -208,9 +211,12 @@ const defaultBlastMiscData: BlastMiscellaneousData = {
     compressorPowerKW: 0,           // Default 0 kW
     compressorAirRunningHours: 0,   // Default 0 hours
 
+    // Door Opening Frequency
+    doorOpeningFrequency: 'low',    // Default low frequency
+
     // Unit preferences
     volumeUnit: 'm³',
-    capacityIncludingSafety: 20,
+    capacityIncludingSafety: 10, // Default safety factor percentage (changed from 20% to 10%)
 };
 
 export interface BlastCalculationResults {
@@ -237,7 +243,6 @@ export interface BlastCalculationResults {
     doorHeaterLoad: number;        // Excel G31: =(C31*D31*3600*F31)
     trayHeaterLoad: number;        // Excel G33: =(C33*D33*3600*F33)
     drainHeaterLoad: number;       // Excel G34: =(C34*D34*3600*F34)
-    compressorLoad: number;        // Compressor load
     totalMiscLoad: number;         // Sum of all miscellaneous loads
 
     // Individual TR calculations - Excel formulas
@@ -255,14 +260,16 @@ export interface BlastCalculationResults {
     doorHeaterLoadTR: number;       // Excel: =G31/(3600*3.517*24)
     trayHeaterLoadTR: number;       // Excel: =G33/(3600*3.517*24)
     drainHeaterLoadTR: number;     // Excel: =G34/(3600*3.517*24)
-    compressorLoadTR: number;      // Compressor load TR
 
     // Final results - Excel calculations
     totalLoadKJ: number;           // Excel G36: =SUM(G8:G34)
     totalLoadKw: number;           // Excel G37: =G36/(3600*D46)
     totalLoadTR: number;           // Excel G38: =G37/3.517
     capacityIncludingSafety: number; // Excel G39: TR with safety factor applied
+    finalCapacity: number;         // Final capacity after door frequency adjustment (TR)
     safetyFactorPercent: number;  // User-defined safety factor percentage
+    doorFrequency: 'low' | 'medium' | 'high'; // Door opening frequency
+    doorFrequencyMultiplier: number; // Multiplier applied for door frequency
     sensibleHeatKJ24Hr: number;    // Excel G40: =SUM(G8:G14)+SUM(G16:G17)+0.4*C
     latentHeatKJ24Hr: number;      // Excel G41: =G15+0.6*G20+0.6*G25
     shr: number;                   // Excel G42: =G40/(G40+G41)

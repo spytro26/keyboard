@@ -281,7 +281,7 @@ export default function SignUpScreen() {
 
             console.log('[SignUp] User profile saved to Firestore. Registration complete.');
             Alert.alert('Account Created', 'Your account has been created successfully!');
-            router.replace('/');
+            router.replace('/(tabs)' as any);
 
         } catch (e: any) {
             console.error('[SignUp] Confirmation Error:', JSON.stringify(e, null, 2));

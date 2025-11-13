@@ -28,6 +28,9 @@ export interface ProductData {
   massBeforeFreezing: number;
   massUnit: 'kg' | 'lbs';
 
+  // NEW: Daily Loading Percentage (affects actual mass used in calculations)
+  dailyLoadingPercent: number; // Default 100%, represents % of total capacity loaded per day
+
   // Product temperatures - NEW FIELDS
   enteringTemp: number; // Product entering temperature
   finalTemp: number; // Product final temperature
@@ -134,6 +137,16 @@ export interface MiscellaneousData {
   compressorPowerKW?: number; // Compressor power in kW
   compressorAirRunningHours?: number; // Compressor running hours per day
 
+  // NEW: Relative Humidity (RH) Parameters
+  ambientRH: number; // Ambient RH (%) - default 55% (base 50-60%)
+  insideRoomRH: number; // Inside room RH (%) - default 85% (base design)
+
+  // NEW: Compressor Operating Hours
+  compressorRunningHours: number; // Compressor running hours per day - default 24
+
+  // NEW: Door Opening Frequency
+  doorOpeningFrequency: 'low' | 'medium' | 'high'; // Door opening frequency - affects final load
+
   // Temperature parameters (Excel structure)
   ambientTemp: number; // D55 in Excel (45°C)
   roomTemp: number; // D56 in Excel (2°C)
@@ -176,15 +189,17 @@ export interface CalculationResults {
   occupancyLoad: number; // G27 in Excel (kJ/24Hr)
   lightLoad: number; // G29 in Excel (kJ/24Hr)
   doorHeaterLoad: number; // G33 in Excel (kJ/24Hr)
-  compressorLoad: number; // Compressor load (kJ/24Hr)
-  totalMiscLoad: number; // Sum of G25, G27, G29, G33, and compressor
+  totalMiscLoad: number; // Sum of G25, G27, G29, G33
 
   // Final results (Excel structure)
   totalLoadKJ: number; // G40 in Excel (kJ/24Hr)
   totalLoadKw: number; // G41 in Excel (kW)
   refrigerationCapacityTR: number; // G42 in Excel (TR)
   capacityIncludingSafety: number; // G43 in Excel (TR with safety)
+  finalCapacity: number; // Final capacity after door frequency adjustment (TR)
   safetyFactorPercent: number; // User-defined safety factor percentage
+  doorFrequency: 'low' | 'medium' | 'high'; // Door opening frequency
+  doorFrequencyMultiplier: number; // Multiplier applied for door frequency
 
   // Sensible and Latent Heat (Excel structure)
   sensibleHeat: number; // G44 in Excel (kJ/24Hr)
@@ -205,7 +220,6 @@ export interface CalculationResults {
   occupancyLoadTR: number; // H27 in Excel (TR)
   lightLoadTR: number; // H29 in Excel (TR)
   doorHeaterLoadTR: number; // H33 in Excel (TR)
-  compressorLoadTR: number; // Compressor load (TR)
   totalLoadTR: number; // H39 in Excel (TR)
 
   // Temperature differences (Excel structure)
