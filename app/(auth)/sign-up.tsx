@@ -11,6 +11,7 @@ export default function SignUpScreen() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [city, setCity] = useState('');
+    const [company, setCompany] = useState('');
     const [phone, setPhone] = useState('');
     const [userType, setUserType] = useState('');
     const [verificationId, setVerificationId] = useState<string | null>(null);
@@ -86,6 +87,11 @@ export default function SignUpScreen() {
         }
     };
 
+    const isValidEmail = (value: string) => {
+        const trimmed = value.trim();
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+    };
+
     const sendCode = async () => {
         setLoading(true);
         try {
@@ -95,7 +101,13 @@ export default function SignUpScreen() {
             console.log(`[SignUp] Name: "${name}"`);
             console.log(`[SignUp] Email: "${email}"`);
             console.log(`[SignUp] City: "${city}"`);
+            console.log(`[SignUp] Company: "${company}"`);
             console.log(`[SignUp] User Type: "${userType}"`);
+
+            const trimmedName = name.trim();
+            const trimmedEmail = email.trim();
+            const trimmedCity = city.trim();
+            const trimmedCompany = company.trim();
 
             // 1. Validate inputs first
             if (phone.length !== 10) {
@@ -104,13 +116,26 @@ export default function SignUpScreen() {
                 setLoading(false);
                 return;
             }
-            if (!name || !email || !city || !userType) {
+            if (!trimmedName || !trimmedEmail || !trimmedCity || !trimmedCompany || !userType) {
                 console.error('[SignUp] VALIDATION FAILED: Missing required fields');
-                console.log(`[SignUp] Missing fields - Name: ${!name}, Email: ${!email}, City: ${!city}, User Type: ${!userType}`);
+                console.log(`[SignUp] Missing fields - Name: ${!trimmedName}, Email: ${!trimmedEmail}, City: ${!trimmedCity}, Company: ${!trimmedCompany}, User Type: ${!userType}`);
                 Alert.alert('Missing Information', 'Please fill all required fields before sending OTP.');
                 setLoading(false);
                 return;
             }
+
+            if (!isValidEmail(trimmedEmail)) {
+                console.error('[SignUp] VALIDATION FAILED: Invalid email format');
+                Alert.alert('Invalid Email', 'Please enter a valid email address.');
+                setLoading(false);
+                return;
+            }
+
+            // Normalize inputs to trimmed values before proceeding
+            setName(trimmedName);
+            setEmail(trimmedEmail);
+            setCity(trimmedCity);
+            setCompany(trimmedCompany);
 
             console.log('[SignUp] ✅ All validations passed');
             
@@ -261,18 +286,31 @@ export default function SignUpScreen() {
                 return;
             }
 
+            const trimmedName = name.trim();
+            const trimmedEmail = email.trim();
+            const trimmedCity = city.trim();
+            const trimmedCompany = company.trim();
+
             console.log('[SignUp] OTP verification started.');
             const credential = PhoneAuthProvider.credential(verificationId, code);
             const userCredential = await signInWithCredential(auth, credential);
             const user = userCredential.user;
             console.log(`[SignUp] Phone number verified and user created with UID: ${user.uid}`);
+            console.log('[SignUp] Persisting user profile with:', {
+                trimmedName,
+                trimmedEmail,
+                trimmedCity,
+                trimmedCompany,
+                userType,
+            });
 
             // Save user data to Firestore (this creates the record we check against)
             await setDoc(doc(db, 'users', user.uid), {
                 uid: user.uid,
-                name,
-                email,
-                city,
+                name: trimmedName,
+                email: trimmedEmail,
+                city: trimmedCity,
+                company: trimmedCompany,
                 phone: `+91${phone}`,
                 userType,
                 createdAt: serverTimestamp(),
@@ -355,6 +393,15 @@ export default function SignUpScreen() {
                                 value={email} 
                                 onChangeText={setEmail} 
                                 returnKeyType="next" 
+                            />
+                            <TextInput 
+                                style={styles.input} 
+                                placeholder="Company" 
+                                placeholderTextColor="#6b7280" 
+                                value={company} 
+                                onChangeText={setCompany} 
+                                returnKeyType="next" 
+                                autoCapitalize="words"
                             />
                             <TextInput 
                                 style={styles.input} 

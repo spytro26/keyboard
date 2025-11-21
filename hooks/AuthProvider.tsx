@@ -15,6 +15,7 @@ type UserProfile = {
     name: string;
     email: string;
     city: string;
+    company: string;
     phone: string;
     userType: string;
     createdAt: any;
@@ -61,6 +62,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                         name: cachedProfile.name,
                         email: cachedProfile.email,
                         city: cachedProfile.city,
+                        company: cachedProfile.company,
                         phone: cachedProfile.phone,
                         userType: cachedProfile.userType,
                         createdAt: null, // Not stored in cache
@@ -75,11 +77,23 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                     const userDoc = await getDoc(userDocRef);
                     
                     if (userDoc.exists()) {
-                        const profileData = userDoc.data() as UserProfile;
+                        const rawData = userDoc.data();
+                        const profileData: UserProfile = {
+                            uid: rawData.uid ?? u.uid,
+                            name: rawData.name ?? '',
+                            email: rawData.email ?? '',
+                            city: rawData.city ?? '',
+                            company: rawData.company ?? '',
+                            phone: rawData.phone ?? (u.phoneNumber || ''),
+                            userType: rawData.userType ?? 'end_user',
+                            createdAt: rawData.createdAt ?? null,
+                            updatedAt: rawData.updatedAt ?? null,
+                        };
                         console.log('[AuthProvider] Fresh user profile loaded from Firestore:', {
                             name: profileData.name,
                             email: profileData.email,
                             city: profileData.city,
+                            company: profileData.company,
                             userType: profileData.userType
                         });
                         
@@ -91,6 +105,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                             name: profileData.name,
                             email: profileData.email,
                             city: profileData.city,
+                            company: profileData.company,
                             phone: profileData.phone,
                             userType: profileData.userType,
                             cachedAt: Date.now()
@@ -114,6 +129,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                             name: 'User', // Default name for offline users
                             email: u.email || '',
                             city: '',
+                            company: '',
                             phone: u.phoneNumber || '',
                             userType: 'end_user',
                             createdAt: null,

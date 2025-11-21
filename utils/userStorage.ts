@@ -7,6 +7,7 @@ export interface StoredUserProfile {
   name: string;
   email: string;
   city: string;
+  company: string;
   phone: string;
   userType: string;
   cachedAt: number; // Timestamp when cached
@@ -31,6 +32,7 @@ export const saveUserProfileToStorage = async (
     console.log('[UserStorage] User profile saved to local storage:', {
       name: profile.name,
       email: profile.email,
+      company: profile.company,
       uid: profile.uid,
     });
   } catch (error) {
@@ -50,10 +52,21 @@ export const getUserProfileFromStorage =
       const storedProfile = await AsyncStorage.getItem(USER_STORAGE_KEY);
 
       if (storedProfile) {
-        const profile: StoredUserProfile = JSON.parse(storedProfile);
+        const parsedProfile = JSON.parse(storedProfile);
+        const profile: StoredUserProfile = {
+          uid: parsedProfile.uid,
+          name: parsedProfile.name,
+          email: parsedProfile.email,
+          city: parsedProfile.city,
+          company: parsedProfile.company ?? '',
+          phone: parsedProfile.phone,
+          userType: parsedProfile.userType,
+          cachedAt: parsedProfile.cachedAt,
+        };
         console.log('[UserStorage] User profile loaded from local storage:', {
           name: profile.name,
           email: profile.email,
+          company: profile.company,
           cachedAge:
             Math.round((Date.now() - profile.cachedAt) / (1000 * 60)) +
             ' minutes ago',

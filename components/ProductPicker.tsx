@@ -8,12 +8,12 @@ type Props = {
 
 // Group products by category
 const PRODUCT_CATEGORIES = {
-    'Dairy Products': ['Butter', 'Cheese Fat', 'Cheese Lean', 'Curd', 'Margarine', 'Milk', 'Dairy Mean Value'],
-    'Fish & Seafood': ['Fish', 'Fish Mean Value', 'Sea Fish Fat', 'Sea Fish Lean', 'Sea Fish Smoked', 'Shell Fish'],
-    'Fruits': ['Pineapple', 'Apple', 'Apricots', 'Banana', 'Cherries', 'Grapes', 'Mangoes', 'Fruit Mean Value', 'Melons', 'Pears', 'Strawberries'],
-    'Vegetables': ['Beans', 'Cabbage', 'Carrots', 'Cucumber', 'Lettuce', 'Mushroom', 'Onions', 'Peas', 'Potato', 'Roots', 'Sweet Potato', 'Tomatoes'],
-    'Meat & Poultry': ['Meat', 'Chicken', 'Pig Fat', 'Pig Lean'],
-    'Other Foods': ['Beer', 'Bread', 'Chocolate', 'Cut Flowers', 'Dough', 'Eggs', 'Ice', 'Custom']
+    'Dairy Products': ['Butter', 'Cheese Fat', 'Cheese Lean', 'Curd', 'Margarine', 'Milk', 'Ice Cream', 'Dairy Mean Value'],
+    'Fish & Seafood': ['Fish', 'Fish Mean Value', 'Sea Fish Fat', 'Sea Fish Lean', 'Sea Fish Smoked', 'Shell Fish', 'Salmon'],
+    'Fruits': ['Pineapple', 'Pineapple (Frozen)', 'Apple', 'Apple (Frozen)', 'Apricots', 'Banana', 'Banana (Frozen)', 'Cherries', 'Grapes', 'Grapes (Frozen)', 'Mangoes', 'Fruit Mean Value', 'Melons', 'Pears', 'Strawberries', 'Strawberries (Frozen)'],
+    'Vegetables': ['Beans', 'Beans (Frozen)', 'Cabbage', 'Carrots', 'Carrots (Frozen)', 'Corn (Frozen)', 'Cucumber', 'Lettuce', 'Mushroom', 'Onions', 'Peas', 'Peas (Frozen)', 'Potato', 'Potato (Frozen)', 'Roots', 'Sweet Potato', 'Tomatoes', 'Vegetables'],
+    'Meat & Poultry': ['Meat', 'Pork', 'Chicken', 'Chicken (Lean)', 'Turkey', 'Pig Fat', 'Pig Lean'],
+    'Other Foods': ['Beer', 'Bread', 'Bread (Frozen)', 'Chocolate', 'Cut Flowers', 'Dough', 'Dough (Frozen)', 'Eggs', 'Eggs (Frozen)', 'Custom']
 };
 
 export const ProductPicker: React.FC<Props> = ({ selected = 'Custom', onSelect }) => {
