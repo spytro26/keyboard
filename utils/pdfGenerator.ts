@@ -1,7 +1,9 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+// Use legacy import to avoid deprecation warnings with newer expo-file-system versions
+// while maintaining compatibility with existing code structure
+import * as FileSystem from 'expo-file-system/legacy';
 import { Alert, Platform } from 'react-native';
-import { File } from 'expo-file-system';
 import { Asset } from 'expo-asset';
 
 export interface PDFData {
@@ -97,7 +99,7 @@ const getLogoBase64 = async (): Promise<{
     }`;
   }
 
-  // Method 2: Try the new File API as backup
+  // Method 2: Try reading file directly as backup
   try {
     const logoAsset = Asset.fromModule(
       require('../assets/images/tradeEnzo.jpg')
@@ -105,8 +107,10 @@ const getLogoBase64 = async (): Promise<{
     await logoAsset.downloadAsync();
 
     if (logoAsset.localUri) {
-      const file = new File(logoAsset.localUri);
-      const base64 = await file.base64();
+      // Use legacy readAsStringAsync instead of new File API
+      const base64 = await FileSystem.readAsStringAsync(logoAsset.localUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
 
       if (base64 && base64.length > 50) {
         const fullBase64 = `data:image/png;base64,${base64}`;
@@ -169,6 +173,17 @@ const createFallbackSVG = () => {
 
 export const generateAndSharePDF = async (data: PDFData) => {
   try {
+    console.log('[PDF] ========== PDF GENERATION START ==========');
+    console.log('[PDF] Input data received:', {
+      title: data.title,
+      projectName: data.projectName,
+      userName: data.userName,
+      hasProjectName: !!data.projectName,
+      hasUserName: !!data.userName,
+      projectNameLength: data.projectName?.length || 0,
+      userNameLength: data.userName?.length || 0,
+    });
+
     // Get the logo as base64
     const logoResult = await getLogoBase64();
 
@@ -215,51 +230,191 @@ export const generateAndSharePDF = async (data: PDFData) => {
       return;
     }
 
-    // Generate a unique filename
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `${data.title.replace(
-      /[^a-zA-Z0-9]/g,
-      '_'
-    )}_${timestamp}.pdf`;
+    // Construct a clean, professional filename: "UserName_ProjectName.pdf"
+    console.log('[PDF] Building filename from:', {
+      projectName: data.projectName,
+      userName: data.userName,
+      projectNameType: typeof data.projectName,
+      userNameType: typeof data.userName,
+    });
+
+    const sanitize = (str: string | undefined | null): string => {
+      if (!str) return '';
+      return str
+        .trim()
+        .replace(/[^a-zA-Z0-9\s-]/g, '')
+        .replace(/\s+/g, '_')
+        .substring(0, 50);
+    };
+
+    let cleanFilename: string;
+
+    try {
+      const projectPart = sanitize(data.projectName);
+      const userPart = sanitize(data.userName);
+
+      console.log('[PDF] Sanitized parts:', {
+        projectPart,
+        userPart,
+        projectPartLength: projectPart.length,
+        userPartLength: userPart.length,
+      });
+
+      // Build filename: UserName_ProjectName.pdf (User requested: user name + project name)
+      if (userPart.length > 0 && projectPart.length > 0) {
+        cleanFilename = `${userPart}_${projectPart}.pdf`;
+      } else if (userPart.length > 0) {
+        cleanFilename = `${userPart}.pdf`;
+      } else if (projectPart.length > 0) {
+        cleanFilename = `${projectPart}.pdf`;
+      } else {
+        cleanFilename = 'CoolCalc_Report.pdf';
+      }
+
+      console.log('[PDF] ✅ Constructed filename:', cleanFilename);
+    } catch (filenameError: any) {
+      console.error('[PDF] ❌ Filename construction error:', filenameError);
+      cleanFilename = 'CoolCalc_Report.pdf';
+      console.log('[PDF] Using fallback filename:', cleanFilename);
+    }
+
+    // Rename the generated PDF to our clean filename
+    // We use cacheDirectory which is safer for sharing on both iOS and Android
+    // as it avoids permission issues with documentDirectory
+    let finalUri = uri;
+    try {
+      // Cast to any to avoid TypeScript errors with some expo versions
+      const fs = FileSystem as any;
+      const targetDirectory = fs.cacheDirectory;
+
+      if (targetDirectory) {
+        const newUri = targetDirectory + cleanFilename;
+
+        console.log('[PDF] Original URI:', uri);
+        console.log('[PDF] Target Directory:', targetDirectory);
+        console.log('[PDF] New URI will be:', newUri);
+
+        // Check if file exists and delete it to avoid conflicts
+        const fileInfo = await FileSystem.getInfoAsync(newUri);
+        if (fileInfo.exists) {
+          console.log('[PDF] Target file exists, deleting first...');
+          await FileSystem.deleteAsync(newUri, { idempotent: true });
+        }
+
+        // Use copyAsync instead of moveAsync as it can be more reliable across different storage locations
+        await FileSystem.copyAsync({
+          from: uri,
+          to: newUri,
+        });
+
+        finalUri = newUri;
+        console.log(
+          '[PDF] ✅ PDF copied and renamed successfully to:',
+          cleanFilename
+        );
+        console.log('[PDF] ✅ Final URI:', finalUri);
+      } else {
+        console.warn('[PDF] ⚠️ cacheDirectory is null, trying local rename');
+        // Fallback to renaming in the same directory if cacheDirectory is not available
+        const lastSlash = uri.lastIndexOf('/');
+        const directory = uri.substring(0, lastSlash + 1);
+        const newUri = directory + cleanFilename;
+
+        await FileSystem.moveAsync({
+          from: uri,
+          to: newUri,
+        });
+        finalUri = newUri;
+      }
+    } catch (renameError: any) {
+      console.error(
+        '[PDF] ❌ Rename error:',
+        renameError?.message || renameError
+      );
+      console.error('[PDF] ❌ Rename error stack:', renameError?.stack);
+
+      // Alert the user if rename fails so they know why the filename is wrong
+      Alert.alert(
+        'Filename Error',
+        `Could not rename PDF file. Sharing with default name.\nError: ${
+          renameError?.message || 'Unknown error'
+        }`
+      );
+
+      console.log('[PDF] ⚠️ Continuing with original filename:', uri);
+      // Continue with original uri if rename fails
+    }
 
     // Share the PDF with enhanced options
-    console.log('Attempting to share PDF...');
-    await Sharing.shareAsync(uri, {
+    console.log('[PDF] Attempting to share PDF from:', finalUri);
+    await Sharing.shareAsync(finalUri, {
       mimeType: 'application/pdf',
       dialogTitle: `Share ${data.title}`,
       UTI: 'com.adobe.pdf',
     });
 
-    console.log('PDF shared successfully');
+    console.log('[PDF] ✅ PDF shared successfully');
   } catch (error) {
-    console.error('Error generating or sharing PDF:', error);
+    console.error('[PDF] ❌ PDF generation/sharing error:', error);
 
     let errorMessage = 'Failed to generate or share PDF. Please try again.';
+    let errorDetails = '';
 
     if (error instanceof Error) {
+      console.error('[PDF] ❌ Error type:', error.name);
+      console.error('[PDF] ❌ Error message:', error.message);
+      console.error('[PDF] ❌ Error stack:', error.stack);
+
       if (error.message?.includes('User cancelled')) {
         // User cancelled sharing - don't show error
-        console.log('User cancelled sharing');
+        console.log('[PDF] User cancelled sharing');
         return;
       } else if (error.message?.includes('not available')) {
         errorMessage = 'Sharing is not available on this device.';
+        errorDetails = error.message;
       } else if (error.message?.includes('permission')) {
         errorMessage =
           'Permission denied. Please check your device permissions for sharing files.';
+        errorDetails = error.message;
+      } else if (error.message?.includes('No such file')) {
+        errorMessage =
+          'PDF file not found after generation. File system error.';
+        errorDetails = error.message;
+      } else if (
+        error.message?.includes('moveAsync') ||
+        error.message?.includes('rename')
+      ) {
+        errorMessage = 'Failed to rename PDF file. Sharing with default name.';
+        errorDetails = error.message;
+      } else {
+        // Show the actual error message to help debug
+        errorMessage = `PDF Error: ${error.message}`;
+        errorDetails = `Type: ${error.name}\nStack: ${
+          error.stack?.substring(0, 200) || 'N/A'
+        }`;
       }
+    } else {
+      errorDetails = String(error);
     }
 
-    Alert.alert('Error', errorMessage, [
-      {
-        text: 'Try Again',
-        onPress: () => generateAndSharePDF(data),
-        style: 'default',
-      },
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-    ]);
+    console.error('[PDF] ❌ Showing error to user:', errorMessage);
+    console.error('[PDF] ❌ Error details:', errorDetails);
+
+    Alert.alert(
+      'PDF Generation Error',
+      `${errorMessage}\n\nDetails: ${errorDetails}`,
+      [
+        {
+          text: 'Try Again',
+          onPress: () => generateAndSharePDF(data),
+          style: 'default',
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
   }
 };
 
