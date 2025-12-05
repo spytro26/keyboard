@@ -303,54 +303,6 @@ export default function ColdRoomResultsTab() {
             />
           </SectionCard>
 
-          {/* NEW: Capacity Adjustments */}
-          <SectionCard title="Capacity Adjustments">
-            <ResultCard
-              title="Ambient RH"
-              value={miscData.ambientRH ?? 55}
-              unit="%"
-            />
-            <ResultCard
-              title="Ambient RH Correction (Air Change)"
-              value={1 + 0.05 * (((miscData.ambientRH ?? 55) - 55) / 10)}
-              unit="×"
-            />
-            <ResultCard
-              title="Inside Room RH"
-              value={miscData.insideRoomRH ?? 85}
-              unit="%"
-            />
-            <ResultCard
-              title="Inside RH Correction (Product Load)"
-              value={1 + 0.05 * ((85 - (miscData.insideRoomRH ?? 85)) / 10)}
-              unit="×"
-            />
-            <ResultCard
-              title="Compressor Running Hours"
-              value={miscData.compressorRunningHours ?? 24}
-              unit="hrs/day"
-            />
-            <ResultCard
-              title="Hours Adjustment Factor"
-              value={24 / (miscData.compressorRunningHours ?? 24)}
-              unit="×"
-            />
-            <ResultCard
-              title="Door Opening Frequency"
-              value={
-                results.doorFrequency === 'high' ? 'High' :
-                results.doorFrequency === 'medium' ? 'Medium' :
-                'Low'
-              }
-              unit=""
-            />
-            <ResultCard
-              title="Door Frequency Adjustment"
-              value={results.doorFrequencyMultiplier}
-              unit="×"
-            />
-          </SectionCard>
-
           {/* Transmission Loads */}
           <SectionCard title="Transmission Loads">
             <ResultCard title="Wall Load" value={results.wallLoad / (24 * 3600)} unit="kW" />
@@ -390,6 +342,34 @@ export default function ColdRoomResultsTab() {
             <ResultCard title="Latent Heat" value={results.latentHeat / (24 * 3600)} unit="kW" />
             <ResultCard title="Sensible Heat Ratio" value={results.sensibleHeatRatio} unit="" />
             <ResultCard title="Air Quantity Required" value={results.airQtyRequired} unit="CFM" />
+          </SectionCard>
+
+          {/* Capacity Adjustments */}
+          <SectionCard title="Capacity Adjustments">
+            <ResultCard
+              title="Ambient RH"
+              value={miscData.ambientRH ?? 55}
+              unit="%"
+            />
+            <ResultCard
+              title="Inside Room RH"
+              value={miscData.insideRoomRH ?? 85}
+              unit="%"
+            />
+            <ResultCard
+              title="Compressor Running Hours"
+              value={miscData.compressorRunningHours ?? 24}
+              unit="hrs/day"
+            />
+            <ResultCard
+              title="Door Opening Frequency"
+              value={
+                results.doorFrequency === 'high' ? 'High' :
+                results.doorFrequency === 'medium' ? 'Medium' :
+                'Low'
+              }
+              unit=""
+            />
           </SectionCard>
 
           <View style={styles.footer}>
