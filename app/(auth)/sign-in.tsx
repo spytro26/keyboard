@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, KeyboardAvoidingView, Platform, ScrollView, Image, Dimensions } from 'react-native';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { FirebaseRecaptchaVerifierModal, FirebaseRecaptchaVerifierModalHandle } from '@/components/FirebaseRecaptcha';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { query, collection, where, getDocs } from 'firebase/firestore';
 import { auth, db, firebaseConfig } from '@/firebase';
 import { router } from 'expo-router';
 
 export default function SignInScreen() {
-    const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
+    const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModalHandle>(null);
     const [mode, setMode] = useState<'login' | 'otp'>('login');
     const [phone, setPhone] = useState('');
     const [verificationId, setVerificationId] = useState<string | null>(null);
@@ -54,16 +54,30 @@ export default function SignInScreen() {
                 return;
             }
 
-            console.log('[SignIn] User found. Sending OTP...');
-            const provider = new PhoneAuthProvider(auth);
-            const id = await provider.verifyPhoneNumber(fullPhoneNumber, recaptchaVerifier.current!);
-            setVerificationId(id);
-            setMode('otp');
-            Alert.alert('OTP Sent', 'A verification code has been sent to your phone number.');
+            console.log('[SignIn] User found. Sending OTP via WebView...');
+            
+            // Use the new requestOTP method which handles reCAPTCHA in WebView
+            const id = await recaptchaVerifier.current?.requestOTP(fullPhoneNumber);
+            
+            if (id) {
+                setVerificationId(id);
+                setMode('otp');
+                Alert.alert('OTP Sent', 'A verification code has been sent to your phone number.');
+            } else {
+                throw new Error('Failed to get verification ID');
+            }
 
         } catch (e: any) {
-            console.error('[SignIn] Send OTP Error:', JSON.stringify(e, null, 2));
-            Alert.alert('Error Sending OTP', `Failed to send OTP. Please try again. (Code: ${e.code})`);
+            console.error('[SignIn] Send OTP Error:', e);
+            console.error('[SignIn] Error code:', e?.code);
+            console.error('[SignIn] Error message:', e?.message);
+            
+            const errorCode = e?.code || 'unknown';
+            const errorMessage = e?.message || 'Unknown error occurred';
+            Alert.alert(
+                'Error Sending OTP', 
+                `${errorMessage}\n\nError Code: ${errorCode}`
+            );
         } finally {
             setLoading(false);
         }
@@ -84,19 +98,25 @@ export default function SignInScreen() {
                 return;
             }
 
-            console.log('[SignIn] Verifying OTP...');
-            const credential = PhoneAuthProvider.credential(verificationId, code);
-            await signInWithCredential(auth, credential);
+            console.log('[SignIn] Verifying OTP using React Native Firebase...');
             
-            console.log('[SignIn] Sign-in successful. Navigating to cold room.');
+            // Create credential and sign in using the MAIN APP's Firebase auth
+            const credential = PhoneAuthProvider.credential(verificationId, code);
+            const userCredential = await signInWithCredential(auth, credential);
+            
+            console.log('[SignIn] ✅ Sign-in successful! UID:', userCredential.user.uid);
+            console.log('[SignIn] Navigating to cold room.');
             router.replace('/(tabs)' as any);
 
         } catch (e: any) {
-            console.error('[SignIn] OTP Verification Failed:', JSON.stringify(e, null, 2));
+            console.error('[SignIn] OTP Verification Failed:', e);
+            console.error('[SignIn] Error code:', e?.code);
+            console.error('[SignIn] Error message:', e?.message);
+            
             let title = 'Sign-In Failed';
-            let message = 'An unexpected error occurred. Please try again.';
+            let message = e?.message || 'An unexpected error occurred. Please try again.';
 
-            switch (e.code) {
+            switch (e?.code) {
                 case 'auth/invalid-verification-code':
                     title = 'Invalid OTP';
                     message = 'The OTP you entered is incorrect. Please try again.';
@@ -106,7 +126,7 @@ export default function SignInScreen() {
                     message = 'The OTP has expired. Please request a new one.';
                     break;
                 default:
-                    message = `An error occurred during sign-in. (Code: ${e.code})`;
+                    message = `${e?.message || 'Unknown error'}\n\nError Code: ${e?.code || 'unknown'}`;
             }
             Alert.alert(title, message);
         } finally {

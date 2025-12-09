@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, KeyboardAvoidingView, Platform, ScrollView, Image, Dimensions, Modal, FlatList } from 'react-native';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { FirebaseRecaptchaVerifierModal, FirebaseRecaptchaVerifierModalHandle } from '@/components/FirebaseRecaptcha';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, firebaseConfig } from '@/firebase';
 import { router } from 'expo-router';
 
 export default function SignUpScreen() {
-    const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
+    const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModalHandle>(null);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [city, setCity] = useState('');
@@ -236,31 +236,33 @@ export default function SignUpScreen() {
             // 3. SEND OTP (Phone number confirmed available)
             console.log('=== SENDING OTP TO NEW PHONE NUMBER ===');
             console.log('[SignUp] 📞 Phone number verified as available');
-            console.log('[SignUp] 📞 Creating PhoneAuthProvider...');
-            
-            const provider = new PhoneAuthProvider(auth);
-            console.log('[SignUp] 📞 Attempting to send OTP...');
-            console.log('[SignUp] 🌐 This will make network requests to Firebase Auth');
+            console.log('[SignUp] 📞 Using WebView reCAPTCHA to send OTP...');
             
             try {
-                const id = await provider.verifyPhoneNumber(fullPhoneNumber, recaptchaVerifier.current!);
+                // Use the new requestOTP method which handles reCAPTCHA in WebView
+                const id = await recaptchaVerifier.current?.requestOTP(fullPhoneNumber);
                 
-                console.log('=== ✅ OTP SENT SUCCESSFULLY ✅ ===');
-                console.log(`[SignUp] ✅ OTP sent to: ${fullPhoneNumber}`);
-                console.log(`[SignUp] ✅ Verification ID: ${id}`);
-                console.log(`[SignUp] ✅ User will now see OTP input field`);
-                
-                setVerificationId(id); // This shows the OTP input UI
-                Alert.alert('OTP Sent', 'A verification code has been sent to your phone number.');
+                if (id) {
+                    console.log('=== ✅ OTP SENT SUCCESSFULLY ✅ ===');
+                    console.log(`[SignUp] ✅ OTP sent to: ${fullPhoneNumber}`);
+                    console.log(`[SignUp] ✅ Verification ID: ${id}`);
+                    console.log(`[SignUp] ✅ User will now see OTP input field`);
+                    
+                    setVerificationId(id); // This shows the OTP input UI
+                    Alert.alert('OTP Sent', 'A verification code has been sent to your phone number.');
+                } else {
+                    throw new Error('Failed to get verification ID');
+                }
                 
             } catch (otpError: any) {
                 console.error('=== 💥 OTP SENDING ERROR 💥 ===');
                 console.error('[SignUp] 💥 Failed to send OTP');
                 console.error('[SignUp] 💥 Error code:', otpError.code);
                 console.error('[SignUp] 💥 Error message:', otpError.message);
-                console.error('[SignUp] 💥 Full error:', JSON.stringify(otpError, null, 2));
                 
-                Alert.alert('OTP Error', `Failed to send OTP. Please try again. (${otpError.code})`);
+                const errorCode = otpError?.code || 'unknown';
+                const errorMessage = otpError?.message || 'Failed to send OTP';
+                Alert.alert('OTP Error', `${errorMessage}\n\nError Code: ${errorCode}`);
             }
 
         } catch (e: any) {
@@ -291,11 +293,14 @@ export default function SignUpScreen() {
             const trimmedCity = city.trim();
             const trimmedCompany = company.trim();
 
-            console.log('[SignUp] OTP verification started.');
+            console.log('[SignUp] OTP verification started using React Native Firebase.');
+            
+            // Create credential and sign in using the MAIN APP's Firebase auth
             const credential = PhoneAuthProvider.credential(verificationId, code);
             const userCredential = await signInWithCredential(auth, credential);
             const user = userCredential.user;
-            console.log(`[SignUp] Phone number verified and user created with UID: ${user.uid}`);
+            
+            console.log(`[SignUp] ✅ Phone verified and user signed in with UID: ${user.uid}`);
             console.log('[SignUp] Persisting user profile with:', {
                 trimmedName,
                 trimmedEmail,
@@ -322,11 +327,14 @@ export default function SignUpScreen() {
             router.replace('/(tabs)' as any);
 
         } catch (e: any) {
-            console.error('[SignUp] Confirmation Error:', JSON.stringify(e, null, 2));
+            console.error('[SignUp] Confirmation Error:', e);
+            console.error('[SignUp] Error code:', e?.code);
+            console.error('[SignUp] Error message:', e?.message);
+            
             let title = 'Account Creation Failed';
-            let message = 'An unexpected error occurred. Please try again.';
+            let message = e?.message || 'An unexpected error occurred. Please try again.';
 
-            switch (e.code) {
+            switch (e?.code) {
                 case 'auth/invalid-verification-code':
                     title = 'Invalid OTP';
                     message = 'The OTP you entered is incorrect. Please try again.';
@@ -336,7 +344,7 @@ export default function SignUpScreen() {
                     message = 'The OTP has expired. Please request a new one.';
                     break;
                 default:
-                    message = `An error occurred during sign-up. (Code: ${e.code})`;
+                    message = `${e?.message || 'Unknown error'}\n\nError Code: ${e?.code || 'unknown'}`;
             }
             Alert.alert(title, message);
         } finally {

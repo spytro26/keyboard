@@ -19,8 +19,23 @@
         },
         "production": {
             "android": {
-                "buildType": "apk"
+                "buildType": "app-bundle"
+            },
+            "cache": {
+                "disabled": true
             }
+        },
+        "production-apk": {
+            "extends": "production",
+            "android": {
+                "buildType": "apk"
+            },
+            "cache": {
+                "disabled": true
+            }
+        },
+        "production-aab": {
+            "extends": "production"
         }
     },
     "submit": {

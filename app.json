@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Enzo Cool Calc",
+    "name": "Enzo Calc",
     "slug": "enzo-cool-calc",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/harsh.png",
+    "icon": "./assets/images/engo.png",
     "scheme": "enzocoolcalc",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/harsh.png",
+      "image": "./assets/images/engo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -23,7 +23,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/harsh.png",
+        "foregroundImage": "./assets/images/engo.png",
         "backgroundColor": "#2563eb"
       },
       "package": "com.enzo.coolcalc",
@@ -38,14 +38,7 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "expo-asset",
-      [
-        "expo-firebase-core",
-        {
-          "androidGoogleServicesFile": "./google-services.json",
-          "iosGoogleServicesFile": "./GoogleService-Info.plist"
-        }
-      ]
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

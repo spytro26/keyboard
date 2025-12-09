@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, KeyboardAvoidingView, Platform, ScrollView, Image, Dimensions } from 'react-native';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { FirebaseRecaptchaVerifierModal, FirebaseRecaptchaVerifierModalHandle, createPhoneAuthRecaptchaVerifier } from '@/components/FirebaseRecaptcha';
 import { PhoneAuthProvider, signInWithCredential, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, firebaseConfig } from '@/firebase';
 import { router } from 'expo-router';
 
 export default function SignUpScreen() {
-    const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
+    const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModalHandle>(null);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
@@ -161,7 +161,8 @@ export default function SignUpScreen() {
             console.log('[SignUp] 📞 This will also check if phone exists in Firebase Auth...');
             
             try {
-                const id = await provider.verifyPhoneNumber(fullPhoneNumber, recaptchaVerifier.current!);
+                const verifier = createPhoneAuthRecaptchaVerifier(recaptchaVerifier);
+                const id = await provider.verifyPhoneNumber(fullPhoneNumber, verifier);
                 console.log(`[SignUp] ✅ OTP sent successfully, verification ID: ${id}`);
                 
                 setVerificationId(id); // This will trigger the UI to show the OTP field

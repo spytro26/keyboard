@@ -31,7 +31,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 expoAutolinking.useExpoModules()
 
-rootProject.name = 'Enzo Cool Calc'
+rootProject.name = 'Enzo Calc'
 
 expoAutolinking.useExpoVersionCatalog()
 
