@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeAuth, getReactNativePersistence, getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const firebaseConfig = {
     apiKey: "AIzaSyA1AhcHvYfeAClJEIssiSssEbnpKifeQ-8",
@@ -12,8 +13,23 @@ export const firebaseConfig = {
 };
 
 // Initialize modular SDK
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+let app;
+let auth;
 
-export const auth = getAuth(app);
+if (getApps().length === 0) {
+    // First time initialization
+    app = initializeApp(firebaseConfig);
+    // Initialize Auth with AsyncStorage persistence for React Native
+    // This ensures user stays logged in after app restart
+    auth = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage)
+    });
+} else {
+    // App already initialized (hot reload case)
+    app = getApp();
+    auth = getAuth(app);
+}
+
+export { auth };
 export const db = getFirestore(app);
 export default app;
