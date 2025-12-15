@@ -45,14 +45,12 @@
     },
     "extra": {
       "eas": {
-        "projectId": "79e0519e-6141-4b87-b573-79eac610d15e"
+        "projectId": "23630e06-6705-4770-b488-902f4c61fd6d"
       },
       "router": {}
     },
-    "owner": "spytro26",
-    "runtimeVersion": "1.0.0",
-    "updates": {
-      "url": "https://u.expo.dev/79e0519e-6141-4b87-b573-79eac610d15e"
-    }
+    "owner": "spytro726",
+    "runtimeVersion": "1.0.0"
+    
   }
 }

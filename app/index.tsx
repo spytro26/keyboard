@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
     View,
     Text,
@@ -15,16 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 const { width, height } = Dimensions.get('window');
 
 export default function HomePage() {
-    // Automatically redirect to cold room on app open
-    useEffect(() => {
-        console.log('[HomePage] Redirecting to cold room...');
-        // Small delay to ensure Root Layout is mounted
-        const timer = setTimeout(() => {
-            router.replace('/(tabs)' as any);
-        }, 100);
-        
-        return () => clearTimeout(timer);
-    }, []);
+    // Note: AuthGate in _layout.tsx handles automatic redirect to cold room for logged-in users
+    // This screen is only shown if user navigates here manually (e.g., from settings)
 
     const handleColdRoomPress = () => {
         router.push('/(tabs)');
