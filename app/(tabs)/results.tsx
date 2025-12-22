@@ -76,7 +76,7 @@ export default function ColdRoomResultsTab() {
           items: [
             { label: 'Product', value: productData.productName || 'Product', unit: '' },
             { label: 'Product Quantity', value: productData.massBeforeFreezing?.toString() || '1000', unit: productData.massUnit || 'kg' },
-            { label: 'Daily Product Loading', value: productData.massBeforeFreezing?.toString() || '1000', unit: productData.massUnit || 'kg' },
+            { label: 'Daily Product Loading', value: ((productData.massBeforeFreezing || 1000) * (productData.dailyLoadingPercent || 100) / 100).toFixed(1), unit: productData.massUnit || 'kg' },
             { label: 'Product Incoming Temp', value: productData.enteringTemp?.toString() || '30', unit: `°${productData.tempUnit || 'C'}` },
             { label: 'Product Final Temp', value: productData.finalTemp?.toString() || '4', unit: `°${productData.tempUnit || 'C'}` },
             { label: 'Specific Heat Above Freezing', value: productData.cpAboveFreezing?.toString() || '3.5', unit: 'kJ/kg °C' },

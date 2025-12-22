@@ -50,7 +50,9 @@
       "router": {}
     },
     "owner": "spytro726",
-    "runtimeVersion": "1.0.0"
-    
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/23630e06-6705-4770-b488-902f4c61fd6d"
+    }
   }
 }
