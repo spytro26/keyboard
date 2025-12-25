@@ -19,7 +19,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.enzo.coolcalc",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
