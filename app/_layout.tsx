@@ -23,7 +23,7 @@ function LoadingScreen() {
 }
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isGuestMode } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const [hasNavigated, setHasNavigated] = useState(false);
@@ -41,11 +41,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inBlastGroup = segments[0] === '(blast)';
     const inAppSection = inTabsGroup || inFreezerGroup || inBlastGroup;
 
-    console.log('[AuthGate] Auth loaded. User:', !!user, 'Segments:', segments);
+    console.log('[AuthGate] Auth loaded. User:', !!user, 'Guest:', isGuestMode, 'Segments:', segments);
 
-    if (!user && !inAuthGroup) {
-      // User is not signed in and not on auth screen -> go to sign-in
-      console.log('[AuthGate] No user, redirecting to sign-in');
+    if (!user && !isGuestMode && !inAuthGroup) {
+      // User is not signed in, not in guest mode, and not on auth screen -> go to sign-in
+      console.log('[AuthGate] No user and not guest, redirecting to sign-in');
       setHasNavigated(true);
       router.replace('/sign-in');
     } else if (user && !inAppSection) {
@@ -53,8 +53,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       console.log('[AuthGate] User logged in, redirecting to cold room');
       setHasNavigated(true);
       router.replace('/(tabs)');
+    } else if (isGuestMode && !inAppSection && !inAuthGroup) {
+      // Guest user not in app section -> go to cold room
+      console.log('[AuthGate] Guest mode, redirecting to cold room');
+      setHasNavigated(true);
+      router.replace('/(tabs)');
     }
-  }, [user, loading, segments, hasNavigated]);
+  }, [user, loading, segments, hasNavigated, isGuestMode]);
 
   // Show loading screen while checking auth state
   if (loading) {

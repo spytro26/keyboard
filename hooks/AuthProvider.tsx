@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signOut as fbSignOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '@/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
     saveUserProfileToStorage, 
     getUserProfileFromStorage, 
@@ -9,6 +10,9 @@ import {
     isCachedProfileValid,
     type StoredUserProfile 
 } from '@/utils/userStorage';
+
+const GUEST_MODE_KEY = 'enzo_guest_mode';
+const GUEST_INPUTS_KEY = 'enzo_guest_inputs';
 
 type UserProfile = {
     uid: string;
@@ -22,6 +26,12 @@ type UserProfile = {
     updatedAt: any;
 };
 
+type GuestInputs = {
+    roomData?: any;
+    productData?: any;
+    miscData?: any;
+};
+
 type AuthContextValue = {
     user: User | null;
     userProfile: UserProfile | null;
@@ -29,6 +39,16 @@ type AuthContextValue = {
     signOut: () => Promise<void>;
     // Helper function to get display name with fallback
     getUserDisplayName: () => string;
+    // Guest mode support
+    isGuestMode: boolean;
+    enableGuestMode: () => Promise<void>;
+    disableGuestMode: () => Promise<void>;
+    // Guest inputs management
+    saveGuestInputs: (inputs: GuestInputs) => Promise<void>;
+    getGuestInputs: () => Promise<GuestInputs | null>;
+    clearGuestInputs: () => Promise<void>;
+    // Delete user account
+    deleteUserAccount: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -37,6 +57,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     const [user, setUser] = useState<User | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isGuestMode, setIsGuestMode] = useState(false);
 
     // Helper function to get display name with fallback
     const getUserDisplayName = (): string => {
@@ -45,6 +66,104 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         }
         return 'User'; // Default fallback name
     };
+
+    // Guest mode functions
+    const enableGuestMode = async () => {
+        try {
+            await AsyncStorage.setItem(GUEST_MODE_KEY, 'true');
+            setIsGuestMode(true);
+            console.log('[AuthProvider] Guest mode enabled');
+        } catch (error) {
+            console.error('[AuthProvider] Failed to enable guest mode:', error);
+        }
+    };
+
+    const disableGuestMode = async () => {
+        try {
+            await AsyncStorage.removeItem(GUEST_MODE_KEY);
+            setIsGuestMode(false);
+            console.log('[AuthProvider] Guest mode disabled');
+        } catch (error) {
+            console.error('[AuthProvider] Failed to disable guest mode:', error);
+        }
+    };
+
+    // Guest inputs management
+    const saveGuestInputs = async (inputs: GuestInputs) => {
+        try {
+            await AsyncStorage.setItem(GUEST_INPUTS_KEY, JSON.stringify(inputs));
+            console.log('[AuthProvider] Guest inputs saved');
+        } catch (error) {
+            console.error('[AuthProvider] Failed to save guest inputs:', error);
+        }
+    };
+
+    const getGuestInputs = async (): Promise<GuestInputs | null> => {
+        try {
+            const stored = await AsyncStorage.getItem(GUEST_INPUTS_KEY);
+            if (stored) {
+                return JSON.parse(stored);
+            }
+            return null;
+        } catch (error) {
+            console.error('[AuthProvider] Failed to get guest inputs:', error);
+            return null;
+        }
+    };
+
+    const clearGuestInputs = async () => {
+        try {
+            await AsyncStorage.removeItem(GUEST_INPUTS_KEY);
+            console.log('[AuthProvider] Guest inputs cleared');
+        } catch (error) {
+            console.error('[AuthProvider] Failed to clear guest inputs:', error);
+        }
+    };
+
+    // Delete user account
+    const deleteUserAccount = async (): Promise<boolean> => {
+        try {
+            if (!user) {
+                console.error('[AuthProvider] No user to delete');
+                return false;
+            }
+
+            // Delete user document from Firestore
+            const userDocRef = doc(db, 'users', user.uid);
+            await deleteDoc(userDocRef);
+            console.log('[AuthProvider] User document deleted from Firestore');
+
+            // Delete user from Firebase Auth
+            await user.delete();
+            console.log('[AuthProvider] User deleted from Firebase Auth');
+
+            // Clear local storage
+            await clearUserProfileFromStorage();
+            await disableGuestMode();
+            await clearGuestInputs();
+
+            return true;
+        } catch (error) {
+            console.error('[AuthProvider] Failed to delete user account:', error);
+            return false;
+        }
+    };
+
+    // Check guest mode on mount
+    useEffect(() => {
+        const checkGuestMode = async () => {
+            try {
+                const guestMode = await AsyncStorage.getItem(GUEST_MODE_KEY);
+                if (guestMode === 'true') {
+                    setIsGuestMode(true);
+                    console.log('[AuthProvider] Guest mode restored from storage');
+                }
+            } catch (error) {
+                console.error('[AuthProvider] Failed to check guest mode:', error);
+            }
+        };
+        checkGuestMode();
+    }, []);
 
     useEffect(() => {
         const unsub = onAuthStateChanged(auth, async (u) => {
@@ -150,11 +269,25 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
     const signOut = async () => {
         await clearUserProfileFromStorage();
+        await disableGuestMode();
         await fbSignOut(auth);
     };
 
     return (
-        <AuthContext.Provider value={{ user, userProfile, loading, signOut, getUserDisplayName }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            userProfile, 
+            loading, 
+            signOut, 
+            getUserDisplayName,
+            isGuestMode,
+            enableGuestMode,
+            disableGuestMode,
+            saveGuestInputs,
+            getGuestInputs,
+            clearGuestInputs,
+            deleteUserAccount
+        }}>
             {children}
         </AuthContext.Provider>
     );

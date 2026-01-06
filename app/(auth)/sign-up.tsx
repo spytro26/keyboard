@@ -5,6 +5,8 @@ import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, firebaseConfig } from '@/firebase';
 import { router } from 'expo-router';
+import { useAuth } from '@/hooks/AuthProvider';
+import { useStorageContext } from '@/hooks/StorageProvider';
 
 export default function SignUpScreen() {
     const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModalHandle>(null);
@@ -18,6 +20,8 @@ export default function SignUpScreen() {
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [showUserTypeDropdown, setShowUserTypeDropdown] = useState(false);
+    const { getGuestInputs, clearGuestInputs, disableGuestMode, enableGuestMode } = useAuth();
+    const { restoreFromGuestInputs } = useStorageContext();
 
     const userTypeOptions = [
         { label: 'End User', value: 'end_user' },
@@ -323,6 +327,18 @@ export default function SignUpScreen() {
             });
 
             console.log('[SignUp] User profile saved to Firestore. Registration complete.');
+
+            // Restore guest inputs if available
+            const guestInputs = await getGuestInputs();
+            if (guestInputs) {
+                console.log('[SignUp] Restoring guest inputs after signup');
+                restoreFromGuestInputs(guestInputs);
+                await clearGuestInputs();
+            }
+
+            // Disable guest mode since user is now logged in
+            await disableGuestMode();
+
             Alert.alert('Account Created', 'Your account has been created successfully!');
             router.replace('/(tabs)' as any);
 
@@ -437,6 +453,12 @@ export default function SignUpScreen() {
                             <TouchableOpacity style={styles.link} onPress={() => router.replace('/sign-in' as any)}>
                                 <Text style={styles.linkText}>Already have an account? Sign in</Text>
                             </TouchableOpacity>
+                            <TouchableOpacity style={styles.guestLink} onPress={async () => {
+                                await enableGuestMode();
+                                router.replace('/(tabs)' as any);
+                            }}>
+                                <Text style={styles.guestLinkText}>Continue without signing up</Text>
+                            </TouchableOpacity>
                         </>
                     ) : (
                         <>
@@ -502,6 +524,8 @@ const styles = StyleSheet.create({
     buttonText: { color: '#fff', fontWeight: '700' },
     link: { marginTop: 12, alignItems: 'center' },
     linkText: { color: '#2563eb', fontWeight: '600' },
+    guestLink: { marginTop: 20, alignItems: 'center', paddingTop: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb' },
+    guestLinkText: { color: '#6b7280', fontWeight: '500', fontSize: 14 },
     // Dropdown styles
     dropdownContainer: {
         marginBottom: 12,

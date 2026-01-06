@@ -5,6 +5,8 @@ import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { query, collection, where, getDocs } from 'firebase/firestore';
 import { auth, db, firebaseConfig } from '@/firebase';
 import { router } from 'expo-router';
+import { useAuth } from '@/hooks/AuthProvider';
+import { useStorageContext } from '@/hooks/StorageProvider';
 
 export default function SignInScreen() {
     const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModalHandle>(null);
@@ -13,6 +15,14 @@ export default function SignInScreen() {
     const [verificationId, setVerificationId] = useState<string | null>(null);
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
+    const { enableGuestMode, getGuestInputs, clearGuestInputs, disableGuestMode } = useAuth();
+    const { restoreFromGuestInputs } = useStorageContext();
+
+    // Handle continue without signin
+    const handleContinueWithoutSignin = async () => {
+        await enableGuestMode();
+        router.replace('/(tabs)' as any);
+    };
 
     // Handle phone number input - only numbers, max 10 digits
     const handlePhoneChange = (text: string) => {
@@ -105,6 +115,18 @@ export default function SignInScreen() {
             const userCredential = await signInWithCredential(auth, credential);
             
             console.log('[SignIn] ✅ Sign-in successful! UID:', userCredential.user.uid);
+
+            // Restore guest inputs if available
+            const guestInputs = await getGuestInputs();
+            if (guestInputs) {
+                console.log('[SignIn] Restoring guest inputs after signin');
+                restoreFromGuestInputs(guestInputs);
+                await clearGuestInputs();
+            }
+
+            // Disable guest mode since user is now logged in
+            await disableGuestMode();
+
             console.log('[SignIn] Navigating to cold room.');
             router.replace('/(tabs)' as any);
 
@@ -208,6 +230,12 @@ export default function SignInScreen() {
                             <Text style={styles.linkText}>New here? Create account</Text>
                         </TouchableOpacity>
                     )}
+
+                    {mode === 'login' && (
+                        <TouchableOpacity style={styles.guestLink} onPress={handleContinueWithoutSignin}>
+                            <Text style={styles.guestLinkText}>Continue without signing in</Text>
+                        </TouchableOpacity>
+                    )}
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -254,4 +282,6 @@ const styles = StyleSheet.create({
     buttonText: { color: '#fff', fontWeight: '700' },
     link: { marginTop: 12, alignItems: 'center' },
     linkText: { color: '#2563eb', fontWeight: '600' },
+    guestLink: { marginTop: 20, alignItems: 'center', paddingTop: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb' },
+    guestLinkText: { color: '#6b7280', fontWeight: '500', fontSize: 14 },
 });

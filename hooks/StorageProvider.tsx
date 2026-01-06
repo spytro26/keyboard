@@ -117,6 +117,7 @@ type StorageContextValue = {
     saveProductData: (d: ProductData) => void;
     saveMiscData: (d: MiscellaneousData) => void;
     resetToDefaults: () => void;
+    restoreFromGuestInputs: (inputs: { roomData?: RoomData; productData?: ProductData; miscData?: MiscellaneousData }) => void;
 };
 
 const StorageContext = createContext<StorageContextValue | undefined>(undefined);
@@ -154,6 +155,20 @@ export const StorageProvider: React.FC<React.PropsWithChildren> = ({ children })
         triggerGlobalUpdate();
     };
 
+    const restoreFromGuestInputs = (inputs: { roomData?: RoomData; productData?: ProductData; miscData?: MiscellaneousData }) => {
+        if (inputs.roomData) {
+            setRoomData({ ...defaultRoomData, ...inputs.roomData });
+        }
+        if (inputs.productData) {
+            setProductData({ ...defaultProductData, ...inputs.productData });
+        }
+        if (inputs.miscData) {
+            setMiscData({ ...defaultMiscData, ...inputs.miscData });
+        }
+        triggerGlobalUpdate();
+        console.log('[StorageProvider] Restored data from guest inputs');
+    };
+
     const value = useMemo<StorageContextValue>(() => ({
         roomData,
         productData,
@@ -162,6 +177,7 @@ export const StorageProvider: React.FC<React.PropsWithChildren> = ({ children })
         saveProductData,
         saveMiscData,
         resetToDefaults,
+        restoreFromGuestInputs,
     }), [roomData, productData, miscData]);
 
     return (

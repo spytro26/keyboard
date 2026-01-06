@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useStorageContext } from '@/hooks/StorageProvider';
 import { useAuth } from '@/hooks/AuthProvider';
 import { useGlobalUpdate } from '@/hooks/useGlobalUpdate';
@@ -19,12 +20,56 @@ import { saveCalculationToFirestore, getCalculationTypeFromTitle } from '@/utils
 
 export default function ColdRoomResultsTab() {
   const { roomData, productData, miscData } = useStorageContext();
-  const { userProfile, getUserDisplayName, user } = useAuth();
+  const { userProfile, getUserDisplayName, user, saveGuestInputs } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [networkStatus, setNetworkStatus] = useState('');
 
   // Subscribe to global updates for real-time calculation
   useGlobalUpdate();
+
+  // If user is not logged in (guest mode), show sign in prompt
+  if (!user) {
+    const handleSignUpToViewResults = async () => {
+      // Save current inputs before navigating to signup
+      await saveGuestInputs({ roomData, productData, miscData });
+      router.push('/sign-up' as any);
+    };
+
+    const handleSignInToViewResults = async () => {
+      // Save current inputs before navigating to signin
+      await saveGuestInputs({ roomData, productData, miscData });
+      router.push('/sign-in' as any);
+    };
+
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Results</Text>
+              <Text style={styles.subtitle}>Sign in to view your calculation results</Text>
+            </View>
+
+            <View style={styles.guestPromptCard}>
+              <Ionicons name="lock-closed-outline" size={80} color="#94a3b8" />
+              <Text style={styles.guestTitle}>Sign In Required</Text>
+              <Text style={styles.guestText}>
+                Create an account or sign in to view your heat load calculation results. Your inputs have been saved and will be restored after signing in.
+              </Text>
+              
+              <TouchableOpacity style={styles.signUpButton} onPress={handleSignUpToViewResults}>
+                <Text style={styles.signUpButtonText}>Create Account to View Results</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.signInButton} onPress={handleSignInToViewResults}>
+                <Text style={styles.signInButtonText}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   const results = calculateHeatLoad(roomData, productData, miscData);
   const baseLoadKw = results.totalLoadKw || 0;
@@ -542,5 +587,59 @@ const styles = StyleSheet.create({
     color: '#475569',
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  // Guest mode styles
+  guestPromptCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginTop: 20,
+  },
+  guestTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  guestText: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  signUpButton: {
+    width: '100%',
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  signUpButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  signInButton: {
+    width: '100%',
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  signInButtonText: {
+    color: '#2563eb',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
