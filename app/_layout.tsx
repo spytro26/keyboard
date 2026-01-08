@@ -26,14 +26,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading, isGuestMode } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const [hasNavigated, setHasNavigated] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(true);
 
   useEffect(() => {
     // Wait for auth to finish loading
     if (loading) return;
-    
-    // Prevent multiple navigations
-    if (hasNavigated) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
@@ -41,28 +38,28 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inBlastGroup = segments[0] === '(blast)';
     const inAppSection = inTabsGroup || inFreezerGroup || inBlastGroup;
 
-    console.log('[AuthGate] Auth loaded. User:', !!user, 'Guest:', isGuestMode, 'Segments:', segments);
+    console.log('[AuthGate] Auth state:', { user: !!user, isGuestMode, segments });
 
     if (!user && !isGuestMode && !inAuthGroup) {
-      // User is not signed in, not in guest mode, and not on auth screen -> go to sign-in
-      console.log('[AuthGate] No user and not guest, redirecting to sign-in');
-      setHasNavigated(true);
-      router.replace('/sign-in');
+      // User is not signed in, not in guest mode, and not on auth screen -> go to sign-up
+      console.log('[AuthGate] No user and not guest, redirecting to sign-up');
+      router.replace('/sign-up');
     } else if (user && !inAppSection) {
       // User is signed in but not in app section -> go directly to cold room
       console.log('[AuthGate] User logged in, redirecting to cold room');
-      setHasNavigated(true);
       router.replace('/(tabs)');
     } else if (isGuestMode && !inAppSection && !inAuthGroup) {
       // Guest user not in app section -> go to cold room
       console.log('[AuthGate] Guest mode, redirecting to cold room');
-      setHasNavigated(true);
       router.replace('/(tabs)');
+    } else {
+      // Already in correct section, stop showing loading
+      setIsNavigating(false);
     }
-  }, [user, loading, segments, hasNavigated, isGuestMode]);
+  }, [user, loading, segments, isGuestMode]);
 
-  // Show loading screen while checking auth state
-  if (loading) {
+  // Show loading screen while checking auth state OR while navigating
+  if (loading || isNavigating) {
     return <LoadingScreen />;
   }
 

@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+  <key>NSPhotoLibraryUsageDescription</key>
+<string>This app allows users to select images from their photo library when needed.</string>
+
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>This app allows users to save images to their photo library when required.</string>
+
+<key>NSCameraUsageDescription</key>
+<string>This app may use the camera to capture images when required.</string>
+
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>CFBundleDevelopmentRegion</key>

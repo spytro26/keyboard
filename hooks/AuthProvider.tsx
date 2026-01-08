@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User, signOut as fbSignOut } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut as fbSignOut, reauthenticateWithCredential, PhoneAuthProvider } from 'firebase/auth';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '@/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -128,24 +128,36 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                 return false;
             }
 
-            // Delete user document from Firestore
-            const userDocRef = doc(db, 'users', user.uid);
-            await deleteDoc(userDocRef);
-            console.log('[AuthProvider] User document deleted from Firestore');
+            console.log('[AuthProvider] Starting account deletion process...');
 
-            // Delete user from Firebase Auth
-            await user.delete();
-            console.log('[AuthProvider] User deleted from Firebase Auth');
+            // First, try to delete without re-authentication
+            try {
+                // Delete user document from Firestore
+                const userDocRef = doc(db, 'users', user.uid);
+                await deleteDoc(userDocRef);
+                console.log('[AuthProvider] User document deleted from Firestore');
 
-            // Clear local storage
-            await clearUserProfileFromStorage();
-            await disableGuestMode();
-            await clearGuestInputs();
+                // Delete user from Firebase Auth
+                await user.delete();
+                console.log('[AuthProvider] User deleted from Firebase Auth');
 
-            return true;
-        } catch (error) {
+                // Clear local storage
+                await clearUserProfileFromStorage();
+                await disableGuestMode();
+                await clearGuestInputs();
+
+                return true;
+            } catch (deleteError: any) {
+                // If deletion fails due to requires-recent-login, the user needs to sign out and back in
+                if (deleteError?.code === 'auth/requires-recent-login') {
+                    console.error('[AuthProvider] Account deletion requires recent login');
+                    throw new Error('For security reasons, please sign out and sign back in, then try deleting your account again.');
+                }
+                throw deleteError;
+            }
+        } catch (error: any) {
             console.error('[AuthProvider] Failed to delete user account:', error);
-            return false;
+            throw error;
         }
     };
 
