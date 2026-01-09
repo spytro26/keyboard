@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "EnzoCoolCalc.app"
-               BlueprintName = "EnzoCoolCalc"
-               ReferencedContainer = "container:EnzoCoolCalc.xcodeproj">
+               BuildableName = "EnzoCalc.app"
+               BlueprintName = "EnzoCalc"
+               ReferencedContainer = "container:EnzoCalc.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "EnzoCoolCalcTests.xctest"
-               BlueprintName = "EnzoCoolCalcTests"
-               ReferencedContainer = "container:EnzoCoolCalc.xcodeproj">
+               BuildableName = "EnzoCalcTests.xctest"
+               BlueprintName = "EnzoCalcTests"
+               ReferencedContainer = "container:EnzoCalc.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "EnzoCoolCalc.app"
-            BlueprintName = "EnzoCoolCalc"
-            ReferencedContainer = "container:EnzoCoolCalc.xcodeproj">
+            BuildableName = "EnzoCalc.app"
+            BlueprintName = "EnzoCalc"
+            ReferencedContainer = "container:EnzoCalc.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "EnzoCoolCalc.app"
-            BlueprintName = "EnzoCoolCalc"
-            ReferencedContainer = "container:EnzoCoolCalc.xcodeproj">
+            BuildableName = "EnzoCalc.app"
+            BlueprintName = "EnzoCalc"
+            ReferencedContainer = "container:EnzoCalc.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
