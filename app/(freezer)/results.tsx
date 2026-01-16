@@ -8,8 +8,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useFreezerStorageContext } from '@/hooks/FreezerStorageProvider';
 import { useAuth } from '@/hooks/AuthProvider';
 import { useGlobalUpdate } from '@/hooks/useGlobalUpdate';
@@ -19,9 +21,10 @@ import { saveCalculationToFirestore, getCalculationTypeFromTitle } from '@/utils
 
 export default function FreezerResultsTab() {
   const { roomData, productData, miscData } = useFreezerStorageContext();
-  const { userProfile, getUserDisplayName, user } = useAuth();
+  const { userProfile, getUserDisplayName, user, saveGuestInputs } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [networkStatus, setNetworkStatus] = useState('');
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
 
   // Subscribe to global updates for real-time calculation
   useGlobalUpdate();
@@ -35,7 +38,20 @@ export default function FreezerResultsTab() {
   const finalCapacityKw = finalCapacityTR * 3.517;
   const finalCapacityBtuHr = finalCapacityKw * 3412;
 
+  const handleSignUpFromModal = async () => {
+    setShowSignUpModal(false);
+    // Save current inputs before navigating to signup
+    await saveGuestInputs({ roomData, productData, miscData });
+    router.push('/sign-up' as any);
+  };
+
   const handleSharePDF = async () => {
+    // If user is not logged in, show the sign up modal
+    if (!user) {
+      setShowSignUpModal(true);
+      return;
+    }
+
     setIsGenerating(true);
     setNetworkStatus('Preparing data...');
     
@@ -244,6 +260,30 @@ export default function FreezerResultsTab() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Sign Up Modal for PDF Sharing */}
+      <Modal
+        visible={showSignUpModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSignUpModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Ionicons name="document-text-outline" size={60} color="#2563eb" />
+            <Text style={styles.modalTitle}>Create Account to Share PDF</Text>
+            <Text style={styles.modalText}>
+              Sign up to share your calculation results as a PDF. Your data will be saved and you can access it anytime.
+            </Text>
+            <TouchableOpacity style={styles.modalSignUpButton} onPress={handleSignUpFromModal}>
+              <Text style={styles.modalSignUpButtonText}>Create Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowSignUpModal(false)}>
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={styles.header}>
@@ -550,5 +590,66 @@ const styles = StyleSheet.create({
     color: '#475569',
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  // Modal styles for PDF sharing
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 340,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalSignUpButton: {
+    width: '100%',
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalSignUpButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalCloseButton: {
+    width: '100%',
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalCloseButtonText: {
+    color: '#64748b',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
