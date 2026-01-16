@@ -273,6 +273,14 @@ export const PRODUCT_PRESETS: ProductPreset[] = [
     hasRespiration: false,
   },
   {
+    name: 'Pulses',
+    cpAboveFreezing: 2.5,
+    cpBelowFreezing: 1.5,
+    freezingPoint: -0.5,
+    respirationWattsPerTonne: 30,
+    hasRespiration: true,
+  },
+  {
     name: 'Ice',
     cpAboveFreezing: 4.2,
     cpBelowFreezing: 2.1,

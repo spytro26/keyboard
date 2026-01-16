@@ -32,6 +32,46 @@ export default function ProductTab() {
     updateProductData(field, numValue);
   };
 
+  // Handle temperature unit change with conversion for all temperature fields
+  const handleTempUnitChange = (field: string, newUnit: string, convertedValue: string) => {
+    const numValue = parseFloat(convertedValue) || 0;
+    const conversionFactor = newUnit === '°F' || newUnit === 'F' 
+      ? (v: number) => (v * 9/5) + 32 
+      : (v: number) => (v - 32) * 5/9;
+    
+    const currentUnit = productData.tempUnit;
+    const needsConversion = (currentUnit === 'C' && (newUnit === '°F' || newUnit === 'F')) || 
+                            (currentUnit === 'F' && (newUnit === '°C' || newUnit === 'C'));
+    
+    // Determine which fields need conversion
+    const newEnteringTemp = field === 'enteringTemp' ? numValue : 
+      (needsConversion ? Math.round(conversionFactor(productData.enteringTemp || 30) * 100) / 100 : productData.enteringTemp);
+    const newFinalTemp = field === 'finalTemp' ? numValue : 
+      (needsConversion ? Math.round(conversionFactor(productData.finalTemp || 4) * 100) / 100 : productData.finalTemp);
+    const newFreezingPoint = field === 'freezingPoint' ? numValue :
+      (needsConversion && productData.freezingPoint !== undefined ? Math.round(conversionFactor(productData.freezingPoint) * 100) / 100 : productData.freezingPoint);
+    
+    const newData = { 
+      ...productData, 
+      enteringTemp: newEnteringTemp,
+      finalTemp: newFinalTemp,
+      freezingPoint: newFreezingPoint,
+      tempUnit: newUnit === '°F' || newUnit === 'F' ? 'F' : 'C'
+    };
+    saveProductData(newData);
+  };
+
+  // Handle mass unit change with conversion
+  const handleMassUnitChange = (newUnit: string, convertedValue: string) => {
+    const numValue = parseFloat(convertedValue) || 0;
+    const newData = { 
+      ...productData, 
+      massBeforeFreezing: numValue,
+      massUnit: newUnit as 'kg' | 'lbs'
+    };
+    saveProductData(newData);
+  };
+
   const handleSelectProduct = (name: string) => {
     const preset = PRODUCT_PRESET_MAP[name];
     if (!preset) return;
@@ -82,6 +122,7 @@ export default function ProductTab() {
             unitOptions={['°C', '°F']}
             selectedUnit={productData.tempUnit === 'F' ? '°F' : '°C'}
             onUnitChange={(unit) => updateProductData('tempUnit', unit === '°F' ? 'F' : 'C')}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleTempUnitChange('enteringTemp', newUnit, convertedValue)}
             allowNegative={true}
           />
 
@@ -93,6 +134,7 @@ export default function ProductTab() {
             unitOptions={['°C', '°F']}
             selectedUnit={productData.tempUnit === 'F' ? '°F' : '°C'}
             onUnitChange={(unit) => updateProductData('tempUnit', unit === '°F' ? 'F' : 'C')}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleTempUnitChange('finalTemp', newUnit, convertedValue)}
             allowNegative={true}
           />
 
@@ -114,6 +156,7 @@ export default function ProductTab() {
             unitOptions={['kg', 'lbs']}
             selectedUnit={productData.massUnit}
             onUnitChange={(unit) => updateProductData('massUnit', unit as 'kg' | 'lbs')}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleMassUnitChange(newUnit, convertedValue)}
           />
 
           <InputField
@@ -154,6 +197,7 @@ export default function ProductTab() {
               unitOptions={['°C', '°F']}
               selectedUnit={productData.tempUnit === 'F' ? '°F' : '°C'}
               onUnitChange={(unit) => updateProductData('tempUnit', unit === '°F' ? 'F' : 'C')}
+              onUnitChangeWithConversion={(newUnit, convertedValue) => handleTempUnitChange('freezingPoint', newUnit, convertedValue)}
               allowNegative={true}
             />
           )}

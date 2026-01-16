@@ -13,7 +13,7 @@ const PRODUCT_CATEGORIES = {
     'Fruits': ['Pineapple', 'Pineapple (Frozen)', 'Apple', 'Apple (Frozen)', 'Apricots', 'Banana', 'Banana (Frozen)', 'Cherries', 'Grapes', 'Grapes (Frozen)', 'Mangoes', 'Fruit Mean Value', 'Melons', 'Pears', 'Strawberries', 'Strawberries (Frozen)'],
     'Vegetables': ['Beans', 'Beans (Frozen)', 'Cabbage', 'Carrots', 'Carrots (Frozen)', 'Corn (Frozen)', 'Cucumber', 'Lettuce', 'Mushroom', 'Onions', 'Peas', 'Peas (Frozen)', 'Potato', 'Potato (Frozen)', 'Roots', 'Sweet Potato', 'Tomatoes', 'Vegetables'],
     'Meat & Poultry': ['Meat', 'Pork', 'Chicken', 'Chicken (Lean)', 'Turkey', 'Pig Fat', 'Pig Lean'],
-    'Other Foods': ['Beer', 'Bread', 'Bread (Frozen)', 'Chocolate', 'Cut Flowers', 'Dough', 'Dough (Frozen)', 'Eggs', 'Eggs (Frozen)', 'Custom']
+    'Other Foods': ['Beer', 'Bread', 'Bread (Frozen)', 'Chocolate', 'Cut Flowers', 'Dough', 'Dough (Frozen)', 'Eggs', 'Eggs (Frozen)', 'Pulses', 'Custom']
 };
 
 export const ProductPicker: React.FC<Props> = ({ selected = 'Custom', onSelect }) => {

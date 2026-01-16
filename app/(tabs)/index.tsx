@@ -33,6 +33,34 @@ export default function RoomDetailsTab() {
     updateRoomData(field, numValue);
   };
 
+  // Handle unit change with value conversion for dimensions
+  const handleDimensionUnitChange = (field: 'length' | 'width' | 'height', newUnit: string, convertedValue: string) => {
+    const numValue = parseFloat(convertedValue) || 0;
+    // Update both the field value and the unit
+    const newData = { ...roomData, [field]: numValue, lengthUnit: newUnit as 'm' | 'ft' };
+    saveRoomData(newData);
+  };
+
+  // Handle unit change with value conversion for all dimensions at once
+  const handleAllDimensionsUnitChange = (newUnit: string, currentField: 'length' | 'width' | 'height', convertedValue: string) => {
+    const numValue = parseFloat(convertedValue) || 0;
+    const conversionFactor = newUnit === 'ft' ? 3.28084 : 1 / 3.28084;
+    
+    // Convert all dimensions to the new unit
+    const newLength = currentField === 'length' ? numValue : Math.round(roomData.length * (roomData.lengthUnit === newUnit ? 1 : conversionFactor) * 100) / 100;
+    const newWidth = currentField === 'width' ? numValue : Math.round(roomData.width * (roomData.lengthUnit === newUnit ? 1 : conversionFactor) * 100) / 100;
+    const newHeight = currentField === 'height' ? numValue : Math.round(roomData.height * (roomData.lengthUnit === newUnit ? 1 : conversionFactor) * 100) / 100;
+    
+    const newData = { 
+      ...roomData, 
+      length: newLength,
+      width: newWidth,
+      height: newHeight,
+      lengthUnit: newUnit as 'm' | 'ft' 
+    };
+    saveRoomData(newData);
+  };
+
 
   const handleHoursChange = (field: 'wallHours' | 'ceilingHours' | 'floorHours', value: string) => {
     const numValue = parseFloat(value) || 0;
@@ -47,6 +75,25 @@ export default function RoomDetailsTab() {
   const handleTemperatureChange = (field: 'ambientTemp' | 'roomTemp', value: string) => {
     const numValue = parseFloat(value) || 0;
     updateMiscData(field, numValue);
+  };
+
+  // Handle unit change with value conversion for temperatures
+  const handleTempUnitChange = (field: 'ambientTemp' | 'roomTemp', newUnit: string, convertedValue: string) => {
+    const numValue = parseFloat(convertedValue) || 0;
+    const conversionFactor = newUnit === 'F' ? (v: number) => (v * 9/5) + 32 : (v: number) => (v - 32) * 5/9;
+    
+    // Convert both temperatures to the new unit
+    const otherField = field === 'ambientTemp' ? 'roomTemp' : 'ambientTemp';
+    const otherValue = miscData[otherField];
+    const convertedOtherValue = miscData.tempUnit === newUnit ? otherValue : Math.round(conversionFactor(otherValue) * 100) / 100;
+    
+    const newData = { 
+      ...miscData, 
+      [field]: numValue,
+      [otherField]: convertedOtherValue,
+      tempUnit: newUnit as 'C' | 'F' 
+    };
+    saveMiscData(newData);
   };
 
   const handleRHChange = (field: 'ambientRH' | 'insideRoomRH', value: string) => {
@@ -102,6 +149,7 @@ export default function RoomDetailsTab() {
             unitOptions={['m', 'ft']}
             selectedUnit={roomData.lengthUnit}
             onUnitChange={(unit) => updateRoomData('lengthUnit', unit as 'm' | 'ft')}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleAllDimensionsUnitChange(newUnit, 'length', convertedValue)}
           />
 
           <InputField
@@ -111,6 +159,7 @@ export default function RoomDetailsTab() {
             unitOptions={['m', 'ft']}
             selectedUnit={roomData.lengthUnit}
             onUnitChange={(unit) => updateRoomData('lengthUnit', unit as 'm' | 'ft')}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleAllDimensionsUnitChange(newUnit, 'width', convertedValue)}
           />
 
           <InputField
@@ -120,6 +169,7 @@ export default function RoomDetailsTab() {
             unitOptions={['m', 'ft']}
             selectedUnit={roomData.lengthUnit}
             onUnitChange={(unit) => updateRoomData('lengthUnit', unit as 'm' | 'ft')}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleAllDimensionsUnitChange(newUnit, 'height', convertedValue)}
           />
 
         </View>
@@ -135,6 +185,7 @@ export default function RoomDetailsTab() {
             unitOptions={['C', 'F']}
             selectedUnit={miscData.tempUnit}
             onUnitChange={(unit) => updateMiscData('tempUnit', unit as 'C' | 'F')}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleTempUnitChange('ambientTemp', newUnit, convertedValue)}
             allowNegative={true}
           />
 
@@ -146,6 +197,7 @@ export default function RoomDetailsTab() {
             unitOptions={['C', 'F']}
             selectedUnit={miscData.tempUnit}
             onUnitChange={(unit) => updateMiscData('tempUnit', unit as 'C' | 'F')}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleTempUnitChange('roomTemp', newUnit, convertedValue)}
             allowNegative={true}
           />
         </View>

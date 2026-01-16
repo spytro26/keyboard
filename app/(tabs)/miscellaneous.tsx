@@ -41,17 +41,49 @@ export default function MiscellaneousTab() {
 
     if (currentUnit === 'mm' && doorUnit === 'm') {
       // Convert mm to m
-      newWidth = newWidth / 1000;
-      newHeight = newHeight / 1000;
+      newWidth = Math.round((newWidth / 1000) * 1000) / 1000;
+      newHeight = Math.round((newHeight / 1000) * 1000) / 1000;
     } else if (currentUnit === 'm' && doorUnit === 'mm') {
       // Convert m to mm
-      newWidth = newWidth * 1000;
-      newHeight = newHeight * 1000;
+      newWidth = Math.round(newWidth * 1000);
+      newHeight = Math.round(newHeight * 1000);
     }
 
-    updateMiscData('doorClearOpeningWidth', newWidth);
-    updateMiscData('doorClearOpeningHeight', newHeight);
-    updateMiscData('doorDimensionUnit', doorUnit);
+    // Update all values at once to avoid race conditions
+    const newData = {
+      ...miscData,
+      doorClearOpeningWidth: newWidth,
+      doorClearOpeningHeight: newHeight,
+      doorDimensionUnit: doorUnit,
+    };
+    saveMiscData(newData);
+  };
+
+  // Handle door dimension unit change with conversion
+  const handleDoorDimensionUnitChange = (field: 'doorClearOpeningWidth' | 'doorClearOpeningHeight', newUnit: string, convertedValue: string) => {
+    const doorUnit = newUnit as 'mm' | 'm';
+    const currentUnit = miscData.doorDimensionUnit || 'mm';
+    if (currentUnit === doorUnit) return;
+
+    const numValue = parseFloat(convertedValue) || 0;
+    const otherField = field === 'doorClearOpeningWidth' ? 'doorClearOpeningHeight' : 'doorClearOpeningWidth';
+    let otherValue = miscData[otherField] || (otherField === 'doorClearOpeningWidth' ? 900 : 2000);
+
+    // Convert the other field value
+    if (currentUnit === 'mm' && doorUnit === 'm') {
+      otherValue = Math.round((otherValue / 1000) * 1000) / 1000;
+    } else if (currentUnit === 'm' && doorUnit === 'mm') {
+      otherValue = Math.round(otherValue * 1000);
+    }
+
+    // Update all values at once
+    const newData = {
+      ...miscData,
+      [field]: numValue,
+      [otherField]: otherValue,
+      doorDimensionUnit: doorUnit,
+    };
+    saveMiscData(newData);
   };
 
   // Calculate air change load (matching Excel formula exactly)
@@ -258,6 +290,7 @@ export default function MiscellaneousTab() {
             unitOptions={['mm', 'm']}
             selectedUnit={miscData.doorDimensionUnit || 'mm'}
             onUnitChange={handleDoorUnitChange}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleDoorDimensionUnitChange('doorClearOpeningWidth', newUnit, convertedValue)}
           />
 
           <InputField
@@ -267,6 +300,7 @@ export default function MiscellaneousTab() {
             unitOptions={['mm', 'm']}
             selectedUnit={miscData.doorDimensionUnit || 'mm'}
             onUnitChange={handleDoorUnitChange}
+            onUnitChangeWithConversion={(newUnit, convertedValue) => handleDoorDimensionUnitChange('doorClearOpeningHeight', newUnit, convertedValue)}
           />
         </View>
 

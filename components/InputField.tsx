@@ -1,6 +1,33 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 
+// Unit conversion utilities
+const convertValue = (value: number, fromUnit: string, toUnit: string): number => {
+  if (fromUnit === toUnit) return value;
+  
+  // Length conversions: m <-> ft
+  if (fromUnit === 'm' && toUnit === 'ft') return value * 3.28084;
+  if (fromUnit === 'ft' && toUnit === 'm') return value / 3.28084;
+  
+  // Length conversions: mm <-> m
+  if (fromUnit === 'mm' && toUnit === 'm') return value / 1000;
+  if (fromUnit === 'm' && toUnit === 'mm') return value * 1000;
+  
+  // Temperature conversions: C <-> F (also handles °C <-> °F)
+  if ((fromUnit === 'C' || fromUnit === '°C') && (toUnit === 'F' || toUnit === '°F')) {
+    return (value * 9/5) + 32;
+  }
+  if ((fromUnit === 'F' || fromUnit === '°F') && (toUnit === 'C' || toUnit === '°C')) {
+    return (value - 32) * 5/9;
+  }
+  
+  // Weight conversions: kg <-> lbs
+  if (fromUnit === 'kg' && toUnit === 'lbs') return value * 2.20462;
+  if (fromUnit === 'lbs' && toUnit === 'kg') return value / 2.20462;
+  
+  return value;
+};
+
 interface InputFieldProps {
   label: string;
   value: string;
@@ -11,6 +38,7 @@ interface InputFieldProps {
   unitOptions?: string[];
   selectedUnit?: string;
   onUnitChange?: (unit: string) => void;
+  onUnitChangeWithConversion?: (newUnit: string, convertedValue: string) => void;
   editable?: boolean;
   allowNegative?: boolean;
 }
@@ -25,6 +53,7 @@ export const InputField: React.FC<InputFieldProps> = ({
   unitOptions,
   selectedUnit,
   onUnitChange,
+  onUnitChangeWithConversion,
   editable = true,
   allowNegative = false,
 }) => {
@@ -111,7 +140,23 @@ export const InputField: React.FC<InputFieldProps> = ({
                   unitOption === unitOptions[0] && styles.firstUnitButton,
                   unitOption === unitOptions[unitOptions.length - 1] && styles.lastUnitButton,
                 ]}
-                onPress={() => onUnitChange(unitOption)}
+                onPress={() => {
+                  if (unitOption !== selectedUnit) {
+                    // Convert the current value to the new unit
+                    const currentValue = parseFloat(value) || 0;
+                    const convertedValue = convertValue(currentValue, selectedUnit, unitOption);
+                    // Round to 2 decimal places for cleaner display
+                    const roundedValue = Math.round(convertedValue * 100) / 100;
+                    
+                    if (onUnitChangeWithConversion) {
+                      // Use the callback that handles both value and unit change
+                      onUnitChangeWithConversion(unitOption, roundedValue.toString());
+                    } else {
+                      // Fallback: just change the unit (old behavior)
+                      onUnitChange(unitOption);
+                    }
+                  }
+                }}
               >
                 <Text
                   style={[
