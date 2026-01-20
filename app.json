@@ -2,7 +2,7 @@
   "expo": {
     "name": "Enzo Calc",
     "slug": "enzo-cool-calc",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/engo.png",
     "scheme": "enzocoolcalc",
@@ -22,8 +22,8 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "buildNumber": "4",
       "infoPlist": {
-    "NSPhotoLibraryUsageDescription": "This app allows users to select images from their photo library when needed."
-  }
+        "NSPhotoLibraryUsageDescription": "This app allows users to select images from their photo library when needed."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -48,15 +48,12 @@
       "typedRoutes": true
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "23630e06-6705-4770-b488-902f4c61fd6d"
-      },
-      "router": {}
+        "projectId": "79e0519e-6141-4b87-b573-79eac610d15e"
+      }
     },
-    "owner": "spytro726",
-    "runtimeVersion": "1.0.1",
-    "updates": {
-      "url": "https://u.expo.dev/23630e06-6705-4770-b488-902f4c61fd6d"
-    }
+    "owner": "spytro26",
+    "runtimeVersion": "1.0.2"
   }
 }
