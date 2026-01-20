@@ -2,7 +2,7 @@
   "expo": {
     "name": "Enzo Calc",
     "slug": "enzo-cool-calc",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/engo.png",
     "scheme": "enzocoolcalc",
@@ -26,6 +26,7 @@
       }
     },
     "android": {
+      "buildNumber": "4",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/engo.png",
         "backgroundColor": "#2563eb"
@@ -54,6 +55,6 @@
       }
     },
     "owner": "spytro26",
-    "runtimeVersion": "1.0.2"
+    "runtimeVersion": "1.0.4"
   }
 }
