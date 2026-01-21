@@ -21,14 +21,9 @@
     },
 
     "production": {
-      "appVersionSource": "local",
-
       "android": {
         "buildType": "app-bundle"
       },
-
-      "ios": {},
-
       "cache": {
         "disabled": true
       }
