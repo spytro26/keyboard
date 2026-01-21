@@ -1,50 +1,57 @@
 {
-    "cli": {
-        "version": ">= 12.0.0"
+  "cli": {
+    "version": ">= 12.0.0"
+  },
+
+  "build": {
+    "development": {
+      "extends": "production",
+      "developmentClient": true,
+      "distribution": "internal"
     },
-    "build": {
-        "development": {
-            "extends": "production",
-            "developmentClient": true,
-            "distribution": "internal"
-        },
-        "preview": {
-            "distribution": "internal",
-            "android": {
-                "buildType": "apk"
-            },
-            "ios": {
-                "simulator": true
-            }
-        },
-        "production": {
-            "android": {
-                "buildType": "app-bundle"
-            },
-            "cache": {
-                "disabled": true
-            }
-        },
-        "production-apk": {
-            "extends": "production",
-            "android": {
-                "buildType": "apk"
-            },
-            "cache": {
-                "disabled": true
-            }
-        },
-        "production-aab": {
-            "extends": "production"
-        }
+
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      }
     },
-    "submit": {
-        "production": {
-            "ios": {
-                "appleId": "iharshkr1@gmail.com",
-                "ascAppId": "6756961183",
-                "appleTeamId": "P4GUBSUMB7"
-            }
-        }
+
+    "production": {
+      "android": {
+        "buildType": "app-bundle",
+        "appVersionSource": "local"
+      },
+      "ios": {
+        "appVersionSource": "local"
+      },
+      "cache": {
+        "disabled": true
+      }
+    },
+
+    "production-apk": {
+      "extends": "production",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+
+    "production-aab": {
+      "extends": "production"
     }
+  },
+
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "iharshkr1@gmail.com",
+        "ascAppId": "6756961183",
+        "appleTeamId": "P4GUBSUMB7"
+      }
+    }
+  }
 }
