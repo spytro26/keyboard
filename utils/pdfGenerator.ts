@@ -6,6 +6,20 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Alert, Platform } from 'react-native';
 import { Asset } from 'expo-asset';
 
+// Helper to add timeout to any promise - prevents hanging on iOS
+const withTimeout = <T>(
+  promise: Promise<T>,
+  ms: number,
+  errorMsg: string,
+): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMsg)), ms),
+    ),
+  ]);
+};
+
 export interface PDFData {
   title: string;
   subtitle: string;
@@ -41,101 +55,157 @@ const getLogoBase64 = async (): Promise<{
   status: string;
 }> => {
   let errorMessage = '';
+  const isIOS = Platform.OS === 'ios';
 
-  // Method 1: Try using the simpler fetch approach first (more reliable)
+  // On iOS, use FileSystem method FIRST as FileReader can hang indefinitely
+  // On Android, FileReader works fine so we can use the fetch approach
+
+  if (isIOS) {
+    // iOS: Use expo-file-system directly (more reliable on iOS)
+    try {
+      console.log('[PDF] iOS: Using FileSystem method for logo loading');
+      const logoAsset = Asset.fromModule(
+        require('../assets/images/tradeEnzo.jpg'),
+      );
+      await logoAsset.downloadAsync();
+
+      if (logoAsset.localUri) {
+        const base64 = await withTimeout(
+          FileSystem.readAsStringAsync(logoAsset.localUri, {
+            encoding: FileSystem.EncodingType.Base64,
+          }),
+          5000,
+          'FileSystem read timed out',
+        );
+
+        if (base64 && base64.length > 50) {
+          const fullBase64 = `data:image/jpeg;base64,${base64}`;
+          console.log('[PDF] iOS: Logo loaded successfully via FileSystem');
+          return {
+            logo: fullBase64,
+            watermark: fullBase64,
+            status: '',
+          };
+        } else {
+          errorMessage = 'iOS FileSystem: base64 was empty or too short';
+        }
+      } else {
+        errorMessage = 'iOS FileSystem: localUri was null';
+      }
+    } catch (fileError: any) {
+      errorMessage = `iOS FileSystem failed: ${fileError?.message || 'Unknown error'}`;
+      console.warn('[PDF] iOS FileSystem error:', errorMessage);
+    }
+  }
+
+  // Method 1: Fetch approach (works well on Android, used as fallback on iOS)
   try {
+    console.log('[PDF] Trying fetch method for logo loading');
     const logoAsset = Asset.fromModule(
-      require('../assets/images/tradeEnzo.jpg')
+      require('../assets/images/tradeEnzo.jpg'),
     );
 
     // Ensure asset is available
     await logoAsset.downloadAsync();
 
     if (logoAsset.uri) {
-      const response = await fetch(logoAsset.uri);
+      const response = await withTimeout(
+        fetch(logoAsset.uri),
+        5000,
+        'Logo fetch timed out',
+      );
 
       if (response.ok) {
         const blob = await response.blob();
 
-        return new Promise((resolve) => {
+        // Wrap FileReader in a promise WITH timeout to prevent iOS hanging
+        const fileReaderPromise = new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
             const result = reader.result as string;
             if (result && result.length > 50) {
-              // Basic validation - base64 should be much longer
-              resolve({
-                logo: result,
-                watermark: result, // Use same image for watermark
-                status: '', // Success - no error message
-              });
+              resolve(result);
             } else {
-              resolve({
-                logo: createFallbackSVG(),
-                watermark: createFallbackSVG(),
-                status: `Logo.png loaded but data was invalid (length: ${
-                  result?.length || 0
-                })`,
-              });
+              reject(
+                new Error(`Invalid result length: ${result?.length || 0}`),
+              );
             }
           };
-          reader.onerror = () => {
-            resolve({
-              logo: createFallbackSVG(),
-              watermark: createFallbackSVG(),
-              status: `FileReader failed to convert logo.png blob to base64`,
-            });
-          };
+          reader.onerror = () => reject(new Error('FileReader error'));
           reader.readAsDataURL(blob);
         });
+
+        try {
+          // 3 second timeout for FileReader - if it hangs, we move on
+          const result = await withTimeout(
+            fileReaderPromise,
+            3000,
+            'FileReader timed out (common on iOS)',
+          );
+
+          console.log('[PDF] Logo loaded successfully via fetch/FileReader');
+          return {
+            logo: result,
+            watermark: result,
+            status: '',
+          };
+        } catch (readerError: any) {
+          errorMessage += ` | FileReader: ${readerError?.message}`;
+          console.warn('[PDF] FileReader timeout/error:', readerError?.message);
+        }
       } else {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage += ` | HTTP ${response.status}: ${response.statusText}`;
       }
     } else {
-      errorMessage = 'Asset URI was null (asset not found in bundle)';
+      errorMessage += ' | Asset URI was null';
     }
   } catch (fetchError: any) {
-    errorMessage = `Fetch method failed: ${
-      fetchError?.message || 'Unknown fetch error'
-    }`;
+    errorMessage += ` | Fetch failed: ${fetchError?.message || 'Unknown fetch error'}`;
   }
 
-  // Method 2: Try reading file directly as backup
-  try {
-    const logoAsset = Asset.fromModule(
-      require('../assets/images/tradeEnzo.jpg')
-    );
-    await logoAsset.downloadAsync();
+  // Method 2: Direct FileSystem read as final fallback (for Android if fetch failed)
+  if (!isIOS) {
+    try {
+      console.log('[PDF] Android: Trying FileSystem fallback');
+      const logoAsset = Asset.fromModule(
+        require('../assets/images/tradeEnzo.jpg'),
+      );
+      await logoAsset.downloadAsync();
 
-    if (logoAsset.localUri) {
-      // Use legacy readAsStringAsync instead of new File API
-      const base64 = await FileSystem.readAsStringAsync(logoAsset.localUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      if (logoAsset.localUri) {
+        const base64 = await withTimeout(
+          FileSystem.readAsStringAsync(logoAsset.localUri, {
+            encoding: FileSystem.EncodingType.Base64,
+          }),
+          5000,
+          'FileSystem read timed out',
+        );
 
-      if (base64 && base64.length > 50) {
-        const fullBase64 = `data:image/png;base64,${base64}`;
-        return {
-          logo: fullBase64,
-          watermark: fullBase64,
-          status: '', // Success
-        };
+        if (base64 && base64.length > 50) {
+          const fullBase64 = `data:image/jpeg;base64,${base64}`;
+          console.log('[PDF] Android: Logo loaded via FileSystem fallback');
+          return {
+            logo: fullBase64,
+            watermark: fullBase64,
+            status: '',
+          };
+        } else {
+          errorMessage += ' | FileSystem: base64 was empty or too short';
+        }
       } else {
-        errorMessage += ` | File API: base64 was empty or too short`;
+        errorMessage += ' | FileSystem: localUri was null';
       }
-    } else {
-      errorMessage += ` | File API: localUri was null`;
+    } catch (fileError: any) {
+      errorMessage += ` | FileSystem failed: ${fileError?.message || 'Unknown error'}`;
     }
-  } catch (fileError: any) {
-    errorMessage += ` | File API failed: ${
-      fileError?.message || 'Unknown error'
-    }`;
   }
 
-  // If we reach here, both methods failed - return SVG with detailed error
+  // If we reach here, all methods failed - return SVG fallback
+  console.warn('[PDF] All logo loading methods failed:', errorMessage);
   return {
     logo: createFallbackSVG(),
     watermark: createFallbackSVG(),
-    status: `logo.png failed to load: ${errorMessage}`,
+    status: `logo failed to load: ${errorMessage}`,
   };
 };
 
@@ -201,7 +271,7 @@ export const generateAndSharePDF = async (data: PDFData) => {
       logoResult.logo,
       logoResult.watermark,
       logoResult.status,
-      isIOS
+      isIOS,
     );
 
     // Generate PDF
@@ -225,7 +295,7 @@ export const generateAndSharePDF = async (data: PDFData) => {
             text: 'OK',
             style: 'default',
           },
-        ]
+        ],
       );
       return;
     }
@@ -310,7 +380,7 @@ export const generateAndSharePDF = async (data: PDFData) => {
         finalUri = newUri;
         console.log(
           '[PDF] ✅ PDF copied and renamed successfully to:',
-          cleanFilename
+          cleanFilename,
         );
         console.log('[PDF] ✅ Final URI:', finalUri);
       } else {
@@ -329,7 +399,7 @@ export const generateAndSharePDF = async (data: PDFData) => {
     } catch (renameError: any) {
       console.error(
         '[PDF] ❌ Rename error:',
-        renameError?.message || renameError
+        renameError?.message || renameError,
       );
       console.error('[PDF] ❌ Rename error stack:', renameError?.stack);
 
@@ -338,7 +408,7 @@ export const generateAndSharePDF = async (data: PDFData) => {
         'Filename Error',
         `Could not rename PDF file. Sharing with default name.\nError: ${
           renameError?.message || 'Unknown error'
-        }`
+        }`,
       );
 
       console.log('[PDF] ⚠️ Continuing with original filename:', uri);
@@ -413,7 +483,7 @@ export const generateAndSharePDF = async (data: PDFData) => {
           text: 'Cancel',
           style: 'cancel',
         },
-      ]
+      ],
     );
   }
 };
@@ -423,7 +493,7 @@ const generateHTMLContent = (
   logoBase64: string = '',
   watermarkBase64: string = '',
   logoStatus: string = 'No Logo',
-  isIOS: boolean = false
+  isIOS: boolean = false,
 ): string => {
   const isFreezerDoc = (data?.title || '').toLowerCase().includes('freezer');
 
@@ -459,7 +529,7 @@ const generateHTMLContent = (
                 <span class="summary-unit">${item.unit}</span>
               </div>
             </div>
-          `
+          `,
             )
             .join('')}
         </div>
@@ -474,7 +544,7 @@ const generateHTMLContent = (
 
     const findSection = (keyword: string) =>
       data.sections.find((section) =>
-        (section.title || '').toLowerCase().includes(keyword)
+        (section.title || '').toLowerCase().includes(keyword),
       );
 
     const buildColumn = (keywords: string[]) =>
@@ -509,7 +579,7 @@ const generateHTMLContent = (
                 .filter(Boolean)
                 .join(' ')}</td>
             </tr>
-          `
+          `,
         )
         .join('');
 
@@ -540,7 +610,7 @@ const generateHTMLContent = (
   })();
 
   const normalizeRoomDefinitionInputs = (
-    inputs: NonNullable<PDFData['inputs']>
+    inputs: NonNullable<PDFData['inputs']>,
   ): NonNullable<PDFData['inputs']> => {
     try {
       return inputs.map((section) => {
@@ -567,7 +637,7 @@ const generateHTMLContent = (
           };
 
           const filtered = items.filter(
-            (it) => it !== len && it !== wid && it !== hgt
+            (it) => it !== len && it !== wid && it !== hgt,
           );
           return { ...section, items: [combined, ...filtered] };
         }
@@ -588,10 +658,10 @@ const generateHTMLContent = (
       .replace(/(^-|-$)/g, '');
 
   const renderSection = (
-    inputSection: NonNullable<PDFData['inputs']>[number]
+    inputSection: NonNullable<PDFData['inputs']>[number],
   ) => `
         <div class="info-card input-card input-card--${slugify(
-          inputSection.title
+          inputSection.title,
         )}">
           <div class="info-card-title">${inputSection.title}</div>
           <table class="info-table">
@@ -605,7 +675,7 @@ const generateHTMLContent = (
                     .filter(Boolean)
                     .join(' ')}</td>
                 </tr>
-              `
+              `,
                 )
                 .join('')}
             </tbody>
@@ -614,19 +684,19 @@ const generateHTMLContent = (
 
   const orderByTitle = (
     list: NonNullable<PDFData['inputs']>,
-    titles: string[]
+    titles: string[],
   ) =>
     titles
       .map((key) =>
         list.find((section) =>
-          (section.title || '').toLowerCase().includes(key)
-        )
+          (section.title || '').toLowerCase().includes(key),
+        ),
       )
       .filter(Boolean) as NonNullable<PDFData['inputs']>;
 
   const remainingSections = (
     list: NonNullable<PDFData['inputs']>,
-    picked: Set<NonNullable<PDFData['inputs']>[number]>
+    picked: Set<NonNullable<PDFData['inputs']>[number]>,
   ) => list.filter((section) => !picked.has(section));
 
   const inputsHTML = (() => {
@@ -641,7 +711,7 @@ const generateHTMLContent = (
       ordered.find((s) => (s.title || '').toLowerCase().includes('ambient')),
       ordered.find((s) => (s.title || '').toLowerCase().includes('product')),
       ...leftovers.filter((s) =>
-        (s.title || '').toLowerCase().includes('left')
+        (s.title || '').toLowerCase().includes('left'),
       ),
     ].filter(Boolean) as NonNullable<PDFData['inputs']>;
 
@@ -649,7 +719,7 @@ const generateHTMLContent = (
       ordered.find((s) => (s.title || '').toLowerCase().includes('room')),
       ordered.find((s) => (s.title || '').toLowerCase().includes('internal')),
       ...leftovers.filter(
-        (s) => !(s.title || '').toLowerCase().includes('left')
+        (s) => !(s.title || '').toLowerCase().includes('left'),
       ),
     ].filter(Boolean) as NonNullable<PDFData['inputs']>;
 
@@ -1041,7 +1111,7 @@ const generateHTMLContent = (
             watermarkBase64 ||
             'data:image/svg+xml;base64,' +
               btoa(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><g opacity="0.9"><circle cx="100" cy="100" r="96" fill="#ffffff"/><text x="100" y="116" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="bold" fill="#0294cf">E</text></g></svg>'
+                '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><g opacity="0.9"><circle cx="100" cy="100" r="96" fill="#ffffff"/><text x="100" y="116" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="bold" fill="#0294cf">E</text></g></svg>',
               )
           }" alt="Watermark" />
         </div>
@@ -1065,7 +1135,7 @@ const generateHTMLContent = (
               day: '2-digit',
               month: '2-digit',
               year: 'numeric',
-            }
+            },
           )}</div>
         </div>
         <div class="divider"></div>
