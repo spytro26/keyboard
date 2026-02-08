@@ -129,6 +129,7 @@ export default function ColdRoomResultsTab() {
           items: [
             { label: 'Product Load', value: ((results.productLoad || 0) / (24 * 3600)).toFixed(1), unit: 'kW' },
             { label: 'Respiration Load', value: ((results.respirationLoad || 0) / (24 * 3600)).toFixed(1), unit: 'kW' },
+            { label: 'Total Product Load', value: (((results.productLoad || 0) + (results.respirationLoad || 0)) / (24 * 3600)).toFixed(1), unit: 'kW' },
           ]
         },
         {
@@ -359,7 +360,7 @@ export default function ColdRoomResultsTab() {
           <SectionCard title="Product Loads">
             <ResultCard title="Product Load" value={results.productLoad / (24 * 3600)} unit="kW" />
             <ResultCard title="Respiration Load" value={results.respirationLoad / (24 * 3600)} unit="kW" />
-            <ResultCard title="Total Product Load" value={results.productLoad / (24 * 3600)} unit="kW" />
+            <ResultCard title="Total Product Load" value={(results.productLoad + results.respirationLoad) / (24 * 3600)} unit="kW" />
           </SectionCard>
 
           {/* Other Loads */}

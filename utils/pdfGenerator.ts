@@ -1,12 +1,10 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-// Use legacy import to avoid deprecation warnings with newer expo-file-system versions
-// while maintaining compatibility with existing code structure
+
 import * as FileSystem from 'expo-file-system/legacy';
 import { Alert, Platform } from 'react-native';
 import { Asset } from 'expo-asset';
 
-// Helper to add timeout to any promise - prevents hanging on iOS
 const withTimeout = <T>(
   promise: Promise<T>,
   ms: number,
@@ -64,9 +62,7 @@ const getLogoBase64 = async (): Promise<{
     // iOS: Use expo-file-system directly (more reliable on iOS)
     try {
       console.log('[PDF] iOS: Using FileSystem method for logo loading');
-      const logoAsset = Asset.fromModule(
-        require('../assets/images/tradeEnzo.jpg'),
-      );
+      const logoAsset = Asset.fromModule(require('../assets/images/engo.png'));
       await logoAsset.downloadAsync();
 
       if (logoAsset.localUri) {
@@ -79,7 +75,7 @@ const getLogoBase64 = async (): Promise<{
         );
 
         if (base64 && base64.length > 50) {
-          const fullBase64 = `data:image/jpeg;base64,${base64}`;
+          const fullBase64 = `data:image/png;base64,${base64}`;
           console.log('[PDF] iOS: Logo loaded successfully via FileSystem');
           return {
             logo: fullBase64,
@@ -101,9 +97,7 @@ const getLogoBase64 = async (): Promise<{
   // Method 1: Fetch approach (works well on Android, used as fallback on iOS)
   try {
     console.log('[PDF] Trying fetch method for logo loading');
-    const logoAsset = Asset.fromModule(
-      require('../assets/images/tradeEnzo.jpg'),
-    );
+    const logoAsset = Asset.fromModule(require('../assets/images/engo.png'));
 
     // Ensure asset is available
     await logoAsset.downloadAsync();
@@ -167,9 +161,7 @@ const getLogoBase64 = async (): Promise<{
   if (!isIOS) {
     try {
       console.log('[PDF] Android: Trying FileSystem fallback');
-      const logoAsset = Asset.fromModule(
-        require('../assets/images/tradeEnzo.jpg'),
-      );
+      const logoAsset = Asset.fromModule(require('../assets/images/engo.png'));
       await logoAsset.downloadAsync();
 
       if (logoAsset.localUri) {
@@ -182,7 +174,7 @@ const getLogoBase64 = async (): Promise<{
         );
 
         if (base64 && base64.length > 50) {
-          const fullBase64 = `data:image/jpeg;base64,${base64}`;
+          const fullBase64 = `data:image/png;base64,${base64}`;
           console.log('[PDF] Android: Logo loaded via FileSystem fallback');
           return {
             logo: fullBase64,
