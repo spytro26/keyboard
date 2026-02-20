@@ -18,7 +18,7 @@ import {
 export const convertTemperature = (
   value: number,
   fromUnit: 'C' | 'F',
-  toUnit: 'C' | 'F'
+  toUnit: 'C' | 'F',
 ): number => {
   if (fromUnit === toUnit) return value;
   if (fromUnit === 'C' && toUnit === 'F') return (value * 9) / 5 + 32;
@@ -29,7 +29,7 @@ export const convertTemperature = (
 export const convertMass = (
   value: number,
   fromUnit: 'kg' | 'lbs',
-  toUnit: 'kg' | 'lbs'
+  toUnit: 'kg' | 'lbs',
 ): number => {
   if (fromUnit === toUnit) return value;
   if (fromUnit === 'kg' && toUnit === 'lbs') return value * 2.20462;
@@ -40,7 +40,7 @@ export const convertMass = (
 export const convertArea = (
   value: number,
   fromUnit: 'm²' | 'ft²',
-  toUnit: 'm²' | 'ft²'
+  toUnit: 'm²' | 'ft²',
 ): number => {
   if (fromUnit === toUnit) return value;
   if (fromUnit === 'm²' && toUnit === 'ft²') return value * 10.7639;
@@ -51,7 +51,7 @@ export const convertArea = (
 export const convertVolume = (
   value: number,
   fromUnit: 'm³' | 'ft³',
-  toUnit: 'm³' | 'ft³'
+  toUnit: 'm³' | 'ft³',
 ): number => {
   if (fromUnit === toUnit) return value;
   if (fromUnit === 'm³' && toUnit === 'ft³') return value * 35.3147;
@@ -63,7 +63,7 @@ export const convertVolume = (
 export const convertLength = (
   value: number,
   from: 'm' | 'ft',
-  to: 'm' | 'ft'
+  to: 'm' | 'ft',
 ): number => {
   if (from === to) return value;
   if (from === 'ft' && to === 'm') return value * 0.3048;
@@ -75,7 +75,7 @@ export const convertLength = (
 export const convertTemp = (
   value: number,
   from: 'C' | 'F',
-  to: 'C' | 'F'
+  to: 'C' | 'F',
 ): number => {
   return convertTemperature(value, from, to);
 };
@@ -84,7 +84,7 @@ export const convertTemp = (
 // U = 1 / R_total, where R_total includes insulation, air films, and structural layers
 const calculateUFactor = (
   insulationThickness: number,
-  insulationType: string = 'PUF'
+  insulationType: string = 'PUF',
 ): number => {
   // Standard thermal conductivity values (W/m·K)
   const thermalConductivity: { [key: string]: number } = {
@@ -116,7 +116,7 @@ const calculateUFactor = (
 const validateStorageCapacity = (
   storageCapacity: number, // kg/m³
   maximumStorage: number, // kg
-  roomVolume: number // m³
+  roomVolume: number, // m³
 ): { isValid: boolean; maxCapacity: number; utilizationPercent: number } => {
   const maxCapacity = storageCapacity * roomVolume; // Maximum theoretical capacity
   const utilizationPercent = (maximumStorage / maxCapacity) * 100;
@@ -133,7 +133,7 @@ const validateStorageCapacity = (
 const calculateAirFlowRequirement = (
   totalLoad: number, // Total cooling load in W
   tempDiff: number, // Temperature difference in K
-  storageCapacity: number // kg/m³
+  storageCapacity: number, // kg/m³
 ): number => {
   // Excel formula: CFM = Load / (1.08 × ΔT × density_factor)
   // Higher storage capacity requires more air circulation
@@ -145,7 +145,7 @@ const calculateAirFlowRequirement = (
 export const calculateHeatLoad = (
   roomData: RoomData,
   productData: ProductData,
-  miscData: MiscellaneousData
+  miscData: MiscellaneousData,
 ): CalculationResults => {
   // Convert all units to metric for calculation (matching Excel)
   const length = convertLength(roomData.length, roomData.lengthUnit, 'm');
@@ -156,7 +156,7 @@ export const calculateHeatLoad = (
   const totalCapacityKg = convertMass(
     productData.massBeforeFreezing,
     productData.massUnit,
-    'kg'
+    'kg',
   );
   const dailyLoadingPercent = productData.dailyLoadingPercent ?? 100;
   const productMass = (totalCapacityKg * dailyLoadingPercent) / 100;
@@ -164,26 +164,26 @@ export const calculateHeatLoad = (
 
   console.log(
     `[Daily Loading] Total Capacity: ${totalCapacityKg} kg, Daily Loading: ${dailyLoadingPercent}%, Actual Mass: ${productMass.toFixed(
-      2
-    )} kg`
+      2,
+    )} kg`,
   );
 
   // Convert temperatures to Celsius for calculation
   const ambientTempC = convertTemp(
     miscData.ambientTemp,
     miscData.tempUnit,
-    'C'
+    'C',
   );
   const roomTempC = convertTemp(miscData.roomTemp, miscData.tempUnit, 'C');
   const productIncomingC = convertTemp(
     productData.enteringTemp,
     productData.tempUnit,
-    'C'
+    'C',
   );
   const productOutgoingC = convertTemp(
     productData.finalTemp,
     productData.tempUnit,
-    'C'
+    'C',
   );
 
   // Calculate temperature differences (Excel exact logic)
@@ -207,15 +207,15 @@ export const calculateHeatLoad = (
   // Calculate U-factors based on insulation thickness (Excel methodology)
   const wallUFactor = calculateUFactor(
     roomData.wallInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
   const ceilingUFactor = calculateUFactor(
     roomData.ceilingInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
   const floorUFactor = calculateUFactor(
     roomData.floorInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
 
   // TRANSMISSION LOADS (kJ/24Hr) - EXACT Excel formulas
@@ -234,15 +234,83 @@ export const calculateHeatLoad = (
     roomData.floorHours;
   const totalTransmissionLoad = wallLoad + ceilingLoad + floorLoad;
 
-  // PRODUCT LOAD (kJ/24Hr) - EXACT Excel formula
-  // Excel: =(C14*D14*E14)*(24/F14) = (Mass * Cp * TempDiff) * (24/PullDownHrs)
-  const productLoadBase =
-    productMass *
-    productData.cpAboveFreezing *
-    productTempDiff *
-    (24 / productData.pullDownHours);
+  // PRODUCT LOAD — Refrigeration Product Load Master Equation
+  // Q = m × [Ca(Tin − Tf) + L + Cb(Tf − Tout)] / (CoolingTime × 3600)
+  //
+  // Q  = Product refrigeration load (kW)
+  // m  = Daily product loading (kg)
+  // Ca = Specific heat ABOVE freezing (kJ/kg·°C)
+  // Cb = Specific heat BELOW freezing (kJ/kg·°C)
+  // L  = Latent heat of freezing (kJ/kg)
+  // Tin  = Incoming product temperature (°C)
+  // Tf   = Freezing temperature of the product (°C)
+  // Tout = Final storage temperature (°C)
+  // CoolingTime = Pull-down / cooling time (hours)
+  // 3600 = hours → seconds conversion
+  //
+  // Three possible cooling stages with automatic case detection:
+  //   1) Cooling above freezing  → Ca(Tin − Tf)
+  //   2) Freezing (phase change) → L
+  //   3) Cooling below freezing  → Cb(Tf − Tout)
 
-  // NEW: Apply Inside RH Correction to Product Load
+  const Tin_cr = productIncomingC; // Incoming product temperature (°C)
+  const Tf_cr = productData.freezingPoint ?? -100; // Freezing point (°C), default very low if not set
+  const Tout_cr = productOutgoingC; // Final storage temperature (°C)
+  const Ca_cr = productData.cpAboveFreezing; // kJ/kg·°C
+  const Cb_cr = productData.cpBelowFreezing ?? productData.cpAboveFreezing; // kJ/kg·°C, fallback to Ca
+  const L_cr = productData.latentHeatOfFusion ?? 0; // kJ/kg, default 0 if not provided
+  const m_cr = productMass; // kg (daily loading mass)
+  const coolingTime_cr = productData.pullDownHours; // hours
+
+  let aboveFreezingTerm_cr = 0; // Ca stage contribution (kJ/kg)
+  let latentTerm_cr = 0; // L  stage contribution (kJ/kg)
+  let belowFreezingTerm_cr = 0; // Cb stage contribution (kJ/kg)
+
+  if (Tin_cr > Tf_cr && Tout_cr >= Tf_cr) {
+    // CASE 1 — Cooling only above freezing
+    // Freezing does not occur → set L = 0, ignore Cb(Tf − Tout) term
+    aboveFreezingTerm_cr = Ca_cr * (Tin_cr - Tout_cr);
+    latentTerm_cr = 0;
+    belowFreezingTerm_cr = 0;
+  } else if (Tin_cr < Tf_cr && Tout_cr < Tf_cr) {
+    // CASE 2 — Cooling only below freezing
+    // Product is already frozen → set L = 0, ignore Ca(Tin − Tf) term
+    aboveFreezingTerm_cr = 0;
+    latentTerm_cr = 0;
+    belowFreezingTerm_cr = Cb_cr * (Tin_cr - Tout_cr);
+  } else {
+    // CASE 3 — Freezing occurs (Tin >= Tf AND Tout < Tf)
+    // Product crosses freezing temperature → use all three terms
+    aboveFreezingTerm_cr = Ca_cr * Math.max(0, Tin_cr - Tf_cr);
+    latentTerm_cr = L_cr;
+    belowFreezingTerm_cr = Cb_cr * Math.max(0, Tf_cr - Tout_cr);
+  }
+
+  // Master equation → Q in kW
+  const productLoadKW_cr =
+    (m_cr * (aboveFreezingTerm_cr + latentTerm_cr + belowFreezingTerm_cr)) /
+    (coolingTime_cr * 3600);
+
+  // Convert to kJ/24Hr for internal consistency with rest of calculation pipeline
+  const productLoadBase = productLoadKW_cr * 24 * 3600;
+
+  const productLoadCase_cr =
+    Tin_cr > Tf_cr && Tout_cr >= Tf_cr
+      ? '1 (above freezing only)'
+      : Tin_cr < Tf_cr && Tout_cr < Tf_cr
+        ? '2 (below freezing only)'
+        : '3 (freezing occurs)';
+  console.log(
+    `[Cold Room - Product Load Master Eq] Case: ${productLoadCase_cr}`,
+  );
+  console.log(
+    `[Cold Room - Product Load Master Eq] Tin=${Tin_cr}°C, Tf=${Tf_cr}°C, Tout=${Tout_cr}°C, m=${m_cr}kg, CT=${coolingTime_cr}hrs`,
+  );
+  console.log(
+    `[Cold Room - Product Load Master Eq] Above=${aboveFreezingTerm_cr.toFixed(2)}, Latent=${latentTerm_cr.toFixed(2)}, Below=${belowFreezingTerm_cr.toFixed(2)} → Q=${productLoadKW_cr.toFixed(4)} kW`,
+  );
+
+  // Apply Inside RH Correction to Product Load
   // Formula: Q_adj,RH_in = Q_base × [1 + k × (RH_ref - RH_in) / 10]
   // Where: RH_ref = 85%, k = 0.05 (5% per 10% RH change)
   const insideRH = miscData.insideRoomRH ?? 85;
@@ -253,10 +321,10 @@ export const calculateHeatLoad = (
 
   console.log(
     `[RH Correction - Product Load] Base: ${productLoadBase.toFixed(
-      2
+      2,
     )} kJ/24hr, Inside RH: ${insideRH}%, Correction Factor: ${rhCorrectionInside.toFixed(
-      4
-    )}, Adjusted: ${productLoad.toFixed(2)} kJ/24hr`
+      4,
+    )}, Adjusted: ${productLoad.toFixed(2)} kJ/24hr`,
   );
 
   // RESPIRATION LOAD (kJ/24Hr) - EXACT Excel formula
@@ -284,10 +352,10 @@ export const calculateHeatLoad = (
 
   console.log(
     `[RH Correction - Air Change Load] Base: ${airChangeLoadBase.toFixed(
-      2
+      2,
     )} kJ/24hr, Ambient RH: ${ambientRH}%, Correction Factor: ${rhCorrectionAmbient.toFixed(
-      4
-    )}, Adjusted: ${airChangeLoad.toFixed(2)} kJ/24hr`
+      4,
+    )}, Adjusted: ${airChangeLoad.toFixed(2)} kJ/24hr`,
   );
 
   // EQUIPMENT LOAD (kJ/24Hr) - EXACT Excel formula
@@ -360,10 +428,10 @@ export const calculateHeatLoad = (
 
   console.log(
     `[Compressor Hours Adjustment] Base Load: ${totalLoadKwBase.toFixed(
-      2
+      2,
     )} kW, Running Hours: ${compressorHours} hrs/day, Adjustment Factor: ${hoursAdjustmentFactor.toFixed(
-      4
-    )}, Adjusted Load: ${totalLoadKw.toFixed(2)} kW`
+      4,
+    )}, Adjusted Load: ${totalLoadKw.toFixed(2)} kW`,
   );
 
   // Refrigeration capacity in TR (Excel: G42 = G41/3.517)
@@ -503,7 +571,7 @@ export const calculateHeatLoad = (
 export const calculateFreezerHeatLoad = (
   roomData: RoomData,
   productData: FreezerProductData,
-  miscData: FreezerMiscellaneousData
+  miscData: FreezerMiscellaneousData,
 ): FreezerCalculationResults => {
   // Convert all units to metric for calculation (matching Excel)
   const length = convertLength(roomData.length, roomData.lengthUnit, 'm');
@@ -514,7 +582,7 @@ export const calculateFreezerHeatLoad = (
   const totalCapacityKg = convertMass(
     productData.massBeforeFreezing,
     productData.massUnit,
-    'kg'
+    'kg',
   );
   const dailyLoadingPercent = productData.dailyLoadingPercent ?? 100;
   const productMass = (totalCapacityKg * dailyLoadingPercent) / 100;
@@ -523,26 +591,26 @@ export const calculateFreezerHeatLoad = (
 
   console.log(
     `[Freezer - Daily Loading] Total Capacity: ${totalCapacityKg} kg, Daily Loading: ${dailyLoadingPercent}%, Actual Mass: ${productMass.toFixed(
-      2
-    )} kg`
+      2,
+    )} kg`,
   );
 
   // Convert temperatures to Celsius for calculation
   const ambientTempC = convertTemp(
     miscData.ambientTemp,
     miscData.tempUnit,
-    'C'
+    'C',
   );
   const roomTempC = convertTemp(miscData.roomTemp, miscData.tempUnit, 'C');
   const productIncomingC = convertTemp(
     miscData.productIncoming,
     miscData.tempUnit,
-    'C'
+    'C',
   );
   const productOutgoingC = convertTemp(
     miscData.productOutgoing,
     miscData.tempUnit,
-    'C'
+    'C',
   );
   const freezingPointC = productData.freezingPoint;
 
@@ -563,15 +631,15 @@ export const calculateFreezerHeatLoad = (
   // Calculate U-factors based on insulation thickness (Excel methodology)
   const wallUFactor = calculateUFactor(
     roomData.wallInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
   const ceilingUFactor = calculateUFactor(
     roomData.ceilingInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
   const floorUFactor = calculateUFactor(
     roomData.floorInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
 
   // TRANSMISSION LOADS (kJ/24Hr) - EXACT Excel formulas
@@ -590,42 +658,86 @@ export const calculateFreezerHeatLoad = (
     roomData.floorHours;
   const totalTransmissionLoad = wallLoad + ceilingLoad + floorLoad;
 
-  // PRODUCT LOAD (kJ/24Hr) - Three phases for freezer (EXACT Excel formulas)
-  // Excel logic: C14=IF(D60<D65,0,D51), C15=3000, C16=D51
-  // Phase 1: Before freezing (incoming temp to freezing point)
-  // Excel formula: =(C14*D14*E14)*(24/F14)
-  const tempDiffBeforeFreezing = productIncomingC - freezingPointC;
-  const beforeFreezingMass =
-    productIncomingC < freezingPointC ? 0 : dailyLoadingKg; // Excel: IF(D60<D65,0,D51)
-  const beforeFreezingLoad =
-    beforeFreezingMass *
-    productData.cpAboveFreezing *
-    tempDiffBeforeFreezing *
-    (24 / productData.pullDownHours);
+  // PRODUCT LOAD — Refrigeration Product Load Master Equation
+  // Q = m × [Ca(Tin − Tf) + L + Cb(Tf − Tout)] / (CoolingTime × 3600)
+  //
+  // Q  = Product refrigeration load (kW)
+  // m  = Daily product loading (kg)
+  // Ca = Specific heat ABOVE freezing (kJ/kg·°C)
+  // Cb = Specific heat BELOW freezing (kJ/kg·°C)
+  // L  = Latent heat of freezing (kJ/kg)
+  // Tin  = Incoming product temperature (°C)
+  // Tf   = Freezing temperature of the product (°C)
+  // Tout = Final storage temperature (°C)
+  // CoolingTime = Pull-down / cooling time (hours)
+  // 3600 = hours → seconds conversion
+  //
+  // Three possible cooling stages with automatic case detection:
+  //   1) Cooling above freezing  → Ca(Tin − Tf)
+  //   2) Freezing (phase change) → L
+  //   3) Cooling below freezing  → Cb(Tf − Tout)
 
-  // Phase 2: Latent heat (freezing) - Excel shows this in separate row
-  // Excel formula: =(C15*D15)*(24/F15) where C15=3000 (fixed value)
-  const latentHeatLoad =
-    dailyLoadingKg *
-    productData.latentHeatOfFusion *
-    (24 / productData.pullDownHours);
+  const Tin = productIncomingC; // Incoming product temperature (°C)
+  const Tf = freezingPointC; // Product freezing point (°C)
+  const Tout = productOutgoingC; // Final storage temperature (°C)
+  const Ca = productData.cpAboveFreezing; // kJ/kg·°C
+  const Cb = productData.cpBelowFreezing; // kJ/kg·°C
+  const L = productData.latentHeatOfFusion; // kJ/kg
+  const m = dailyLoadingKg; // kg (daily loading mass)
+  const coolingTime = productData.pullDownHours; // hours
 
-  // Phase 3: After freezing (freezing point to final temp)
-  // Excel formula: =(C16*D16*E16)*(24/F16) where C16=D51 (daily loading)
-  const tempDiffAfterFreezing =
-    productIncomingC < freezingPointC
-      ? productIncomingC - productOutgoingC
-      : freezingPointC - productOutgoingC;
-  const afterFreezingLoad =
-    dailyLoadingKg *
-    productData.cpBelowFreezing *
-    tempDiffAfterFreezing *
-    (24 / productData.pullDownHours);
+  let aboveFreezingTerm = 0; // Ca stage contribution (kJ/kg)
+  let latentTerm = 0; // L  stage contribution (kJ/kg)
+  let belowFreezingTerm = 0; // Cb stage contribution (kJ/kg)
 
-  // Total product load - Excel exact calculation
+  if (Tin > Tf && Tout >= Tf) {
+    // CASE 1 — Cooling only above freezing
+    // Freezing does not occur → set L = 0, ignore Cb(Tf − Tout) term
+    aboveFreezingTerm = Ca * (Tin - Tout);
+    latentTerm = 0;
+    belowFreezingTerm = 0;
+  } else if (Tin < Tf && Tout < Tf) {
+    // CASE 2 — Cooling only below freezing
+    // Product is already frozen → set L = 0, ignore Ca(Tin − Tf) term
+    aboveFreezingTerm = 0;
+    latentTerm = 0;
+    belowFreezingTerm = Cb * (Tin - Tout);
+  } else {
+    // CASE 3 — Freezing occurs (Tin >= Tf AND Tout < Tf)
+    // Product crosses freezing temperature → use all three terms
+    aboveFreezingTerm = Ca * Math.max(0, Tin - Tf);
+    latentTerm = L;
+    belowFreezingTerm = Cb * Math.max(0, Tf - Tout);
+  }
+
+  // Master equation → Q in kW
+  const productLoadKW =
+    (m * (aboveFreezingTerm + latentTerm + belowFreezingTerm)) /
+    (coolingTime * 3600);
+
+  // Convert individual phase loads to kJ/24Hr for internal consistency
+  // (kW → kJ/24Hr  =  kW × 24 × 3600, which simplifies to m × term × 24 / coolingTime)
+  const beforeFreezingLoad = (m * aboveFreezingTerm * 24) / coolingTime;
+  const latentHeatLoad = (m * latentTerm * 24) / coolingTime;
+  const afterFreezingLoad = (m * belowFreezingTerm * 24) / coolingTime;
+
   const totalProductLoad =
     beforeFreezingLoad + latentHeatLoad + afterFreezingLoad;
   const productLoad = totalProductLoad; // For compatibility with base interface
+
+  const productLoadCase =
+    Tin > Tf && Tout >= Tf
+      ? '1 (above freezing only)'
+      : Tin < Tf && Tout < Tf
+        ? '2 (below freezing only)'
+        : '3 (freezing occurs)';
+  console.log(`[Freezer - Product Load Master Eq] Case: ${productLoadCase}`);
+  console.log(
+    `[Freezer - Product Load Master Eq] Tin=${Tin}°C, Tf=${Tf}°C, Tout=${Tout}°C, m=${m}kg, CT=${coolingTime}hrs`,
+  );
+  console.log(
+    `[Freezer - Product Load Master Eq] Above=${aboveFreezingTerm.toFixed(2)}, Latent=${latentTerm.toFixed(2)}, Below=${belowFreezingTerm.toFixed(2)} → Q=${productLoadKW.toFixed(4)} kW`,
+  );
 
   // RESPIRATION LOAD (kJ/24Hr) - EXACT Excel formula
   // Excel: =(C19*D19*3.6*24/1000) where C19=D51 (daily loading)
@@ -805,24 +917,26 @@ export const calculateFreezerHeatLoad = (
   // Temperature differences for display
   const productTempDiff = productIncomingC - productOutgoingC;
 
+  const kWFactor = 24 * 3600; // Divisor to convert kJ/24hr to kW
+
   return {
-    wallLoad: wallLoad / 1000, // Convert to kW for display
-    ceilingLoad: ceilingLoad / 1000,
-    floorLoad: floorLoad / 1000,
-    totalTransmissionLoad: totalTransmissionLoad / 1000,
-    productLoad: productLoad / 1000,
-    beforeFreezingLoad: beforeFreezingLoad / 1000,
-    latentHeatLoad: latentHeatLoad / 1000,
-    afterFreezingLoad: afterFreezingLoad / 1000,
-    totalProductLoad: totalProductLoad / 1000,
-    respirationLoad: respirationLoad / 1000,
-    airChangeLoad: airChangeLoad / 1000,
-    equipmentLoad: equipmentLoad / 1000,
-    occupancyLoad: occupancyLoad / 1000,
-    lightLoad: lightLoad / 1000,
+    wallLoad: wallLoad / kWFactor, // Convert kJ/24hr to kW
+    ceilingLoad: ceilingLoad / kWFactor,
+    floorLoad: floorLoad / kWFactor,
+    totalTransmissionLoad: totalTransmissionLoad / kWFactor,
+    productLoad: productLoad / kWFactor,
+    beforeFreezingLoad: beforeFreezingLoad / kWFactor,
+    latentHeatLoad: latentHeatLoad / kWFactor,
+    afterFreezingLoad: afterFreezingLoad / kWFactor,
+    totalProductLoad: totalProductLoad / kWFactor,
+    respirationLoad: respirationLoad / kWFactor,
+    airChangeLoad: airChangeLoad / kWFactor,
+    equipmentLoad: equipmentLoad / kWFactor,
+    occupancyLoad: occupancyLoad / kWFactor,
+    lightLoad: lightLoad / kWFactor,
     doorHeaterLoad:
-      (doorHeatersLoad + trayHeatersLoad + drainHeatersLoad) / 1000, // Combined heater loads
-    totalMiscLoad: totalMiscLoad / 1000,
+      (doorHeatersLoad + trayHeatersLoad + drainHeatersLoad) / kWFactor, // Combined heater loads
+    totalMiscLoad: totalMiscLoad / kWFactor,
     totalLoadKJ,
     totalLoadKw,
     refrigerationCapacityTR,
@@ -831,8 +945,8 @@ export const calculateFreezerHeatLoad = (
     safetyFactorPercent,
     doorFrequency,
     doorFrequencyMultiplier,
-    sensibleHeat: sensibleHeat / 1000,
-    latentHeat: latentHeat / 1000,
+    sensibleHeat: sensibleHeat / kWFactor,
+    latentHeat: latentHeat / kWFactor,
     sensibleHeatRatio,
     airQtyRequired,
 
@@ -864,7 +978,7 @@ export const calculateFreezerHeatLoad = (
 export const calculateBlastHeatLoad = (
   roomData: BlastRoomData,
   productData: BlastProductData,
-  miscData: BlastMiscellaneousData
+  miscData: BlastMiscellaneousData,
 ): BlastCalculationResults => {
   // Convert room dimensions to meters
   const length = convertLength(roomData.length, roomData.lengthUnit, 'm');
@@ -875,34 +989,34 @@ export const calculateBlastHeatLoad = (
   const ambientTempC = convertTemperature(
     roomData.ambientTemp,
     roomData.tempUnit,
-    'C'
+    'C',
   );
   const roomTempC = convertTemperature(
     roomData.roomTemp,
     roomData.tempUnit,
-    'C'
+    'C',
   );
   const productEnteringTempC = convertTemperature(
     productData.productEnteringTemp,
     productData.tempUnit,
-    'C'
+    'C',
   );
   const productFinalTempC = convertTemperature(
     productData.productFinalTemp,
     productData.tempUnit,
-    'C'
+    'C',
   );
   const freezingPointC = convertTemperature(
     productData.freezingPoint,
     productData.tempUnit,
-    'C'
+    'C',
   );
 
   // Convert masses to kg - Use capacityRequired from productData as the primary mass
   const capacityRequiredKg = convertMass(
     productData.capacityRequired,
     productData.massUnit,
-    'kg'
+    'kg',
   );
   const massKg = capacityRequiredKg; // Excel uses same mass for all calculations
 
@@ -920,15 +1034,15 @@ export const calculateBlastHeatLoad = (
   // Calculate U-factors based on insulation thickness (Excel methodology)
   const wallUFactor = calculateUFactor(
     roomData.wallInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
   const ceilingUFactor = calculateUFactor(
     roomData.ceilingInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
   const floorUFactor = calculateUFactor(
     roomData.floorInsulationThickness,
-    roomData.insulationType
+    roomData.insulationType,
   );
 
   // TRANSMISSION LOADS - Excel formulas G8, G9, G10

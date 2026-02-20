@@ -47,157 +47,155 @@ export interface PDFData {
   }>;
 }
 
+// Cache the logo base64 so we only load it once per app session
+let _cachedLogoBase64: string | null = null;
+
 const getLogoBase64 = async (): Promise<{
   logo: string;
   watermark: string;
   status: string;
 }> => {
-  let errorMessage = '';
-  const isIOS = Platform.OS === 'ios';
+  // Return cached result if available
+  if (_cachedLogoBase64) {
+    console.log('[PDF] Using cached logo base64');
+    return { logo: _cachedLogoBase64, watermark: _cachedLogoBase64, status: '' };
+  }
 
-  // On iOS, use FileSystem method FIRST as FileReader can hang indefinitely
-  // On Android, FileReader works fine so we can use the fetch approach
+  const errors: string[] = [];
 
-  if (isIOS) {
-    // iOS: Use expo-file-system directly (more reliable on iOS)
+  // Load the asset once — use the smaller PDF-optimized version
+  let logoAsset: Asset;
+  try {
+    logoAsset = Asset.fromModule(require('../assets/images/engo_pdf.png'));
+    await withTimeout(logoAsset.downloadAsync(), 8000, 'Asset download timed out');
+    console.log('[PDF] Asset info:', {
+      uri: logoAsset.uri,
+      localUri: logoAsset.localUri,
+      downloaded: logoAsset.downloaded,
+    });
+  } catch (e: any) {
+    // If the optimized image doesn't exist, try the original
     try {
-      console.log('[PDF] iOS: Using FileSystem method for logo loading');
-      const logoAsset = Asset.fromModule(require('../assets/images/engo.png'));
-      await logoAsset.downloadAsync();
-
-      if (logoAsset.localUri) {
-        const base64 = await withTimeout(
-          FileSystem.readAsStringAsync(logoAsset.localUri, {
-            encoding: FileSystem.EncodingType.Base64,
-          }),
-          5000,
-          'FileSystem read timed out',
-        );
-
-        if (base64 && base64.length > 50) {
-          const fullBase64 = `data:image/png;base64,${base64}`;
-          console.log('[PDF] iOS: Logo loaded successfully via FileSystem');
-          return {
-            logo: fullBase64,
-            watermark: fullBase64,
-            status: '',
-          };
-        } else {
-          errorMessage = 'iOS FileSystem: base64 was empty or too short';
-        }
-      } else {
-        errorMessage = 'iOS FileSystem: localUri was null';
-      }
-    } catch (fileError: any) {
-      errorMessage = `iOS FileSystem failed: ${fileError?.message || 'Unknown error'}`;
-      console.warn('[PDF] iOS FileSystem error:', errorMessage);
+      logoAsset = Asset.fromModule(require('../assets/images/engo.png'));
+      await withTimeout(logoAsset.downloadAsync(), 8000, 'Asset download timed out (original)');
+      console.log('[PDF] Fallback to original engo.png, Asset info:', {
+        uri: logoAsset.uri,
+        localUri: logoAsset.localUri,
+        downloaded: logoAsset.downloaded,
+      });
+    } catch (e2: any) {
+      errors.push(`Asset download failed: ${e2?.message}`);
+      console.warn('[PDF] Asset download failed completely:', e2?.message);
+      return _fallbackResult(errors);
     }
   }
 
-  // Method 1: Fetch approach (works well on Android, used as fallback on iOS)
-  try {
-    console.log('[PDF] Trying fetch method for logo loading');
-    const logoAsset = Asset.fromModule(require('../assets/images/engo.png'));
+  const uri = logoAsset.localUri || logoAsset.uri;
+  if (!uri) {
+    errors.push('Asset has no URI after download');
+    return _fallbackResult(errors);
+  }
 
-    // Ensure asset is available
-    await logoAsset.downloadAsync();
-
-    if (logoAsset.uri) {
-      const response = await withTimeout(
-        fetch(logoAsset.uri),
+  // ── Method 1: FileSystem.readAsStringAsync with localUri ──
+  if (logoAsset.localUri) {
+    try {
+      console.log('[PDF] Method 1: FileSystem.readAsStringAsync from localUri');
+      const base64 = await withTimeout(
+        FileSystem.readAsStringAsync(logoAsset.localUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        }),
         5000,
-        'Logo fetch timed out',
+        'FileSystem read timed out',
       );
+      if (base64 && base64.length > 100) {
+        _cachedLogoBase64 = `data:image/png;base64,${base64}`;
+        console.log('[PDF] ✅ Method 1 success — logo loaded via FileSystem, length:', base64.length);
+        return { logo: _cachedLogoBase64, watermark: _cachedLogoBase64, status: '' };
+      }
+      errors.push(`Method 1: base64 too short (${base64?.length || 0})`);
+    } catch (e: any) {
+      errors.push(`Method 1: ${e?.message}`);
+      console.warn('[PDF] Method 1 failed:', e?.message);
+    }
+  } else {
+    errors.push('Method 1: localUri is null');
+  }
 
+  // ── Method 2: Download to cache directory, then read ──
+  try {
+    console.log('[PDF] Method 2: Download to cache then read');
+    const cacheUri = `${FileSystem.cacheDirectory}engo_logo_${Date.now()}.png`;
+    const downloadResult = await withTimeout(
+      FileSystem.downloadAsync(uri, cacheUri),
+      8000,
+      'Cache download timed out',
+    );
+    if (downloadResult?.uri) {
+      const base64 = await withTimeout(
+        FileSystem.readAsStringAsync(downloadResult.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        }),
+        5000,
+        'Cache read timed out',
+      );
+      if (base64 && base64.length > 100) {
+        _cachedLogoBase64 = `data:image/png;base64,${base64}`;
+        console.log('[PDF] ✅ Method 2 success — logo loaded via cache download, length:', base64.length);
+        // Clean up the temp file
+        FileSystem.deleteAsync(cacheUri, { idempotent: true }).catch(() => {});
+        return { logo: _cachedLogoBase64, watermark: _cachedLogoBase64, status: '' };
+      }
+      errors.push(`Method 2: base64 too short (${base64?.length || 0})`);
+    } else {
+      errors.push('Method 2: download returned no uri');
+    }
+  } catch (e: any) {
+    errors.push(`Method 2: ${e?.message}`);
+    console.warn('[PDF] Method 2 failed:', e?.message);
+  }
+
+  // ── Method 3: fetch + FileReader (good on Android, may hang on iOS) ──
+  if (Platform.OS !== 'ios') {
+    try {
+      console.log('[PDF] Method 3: fetch + FileReader');
+      const response = await withTimeout(fetch(uri), 5000, 'Fetch timed out');
       if (response.ok) {
         const blob = await response.blob();
-
-        // Wrap FileReader in a promise WITH timeout to prevent iOS hanging
-        const fileReaderPromise = new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const result = reader.result as string;
-            if (result && result.length > 50) {
-              resolve(result);
-            } else {
-              reject(
-                new Error(`Invalid result length: ${result?.length || 0}`),
-              );
-            }
-          };
-          reader.onerror = () => reject(new Error('FileReader error'));
-          reader.readAsDataURL(blob);
-        });
-
-        try {
-          // 3 second timeout for FileReader - if it hangs, we move on
-          const result = await withTimeout(
-            fileReaderPromise,
-            3000,
-            'FileReader timed out (common on iOS)',
-          );
-
-          console.log('[PDF] Logo loaded successfully via fetch/FileReader');
-          return {
-            logo: result,
-            watermark: result,
-            status: '',
-          };
-        } catch (readerError: any) {
-          errorMessage += ` | FileReader: ${readerError?.message}`;
-          console.warn('[PDF] FileReader timeout/error:', readerError?.message);
-        }
-      } else {
-        errorMessage += ` | HTTP ${response.status}: ${response.statusText}`;
-      }
-    } else {
-      errorMessage += ' | Asset URI was null';
-    }
-  } catch (fetchError: any) {
-    errorMessage += ` | Fetch failed: ${fetchError?.message || 'Unknown fetch error'}`;
-  }
-
-  // Method 2: Direct FileSystem read as final fallback (for Android if fetch failed)
-  if (!isIOS) {
-    try {
-      console.log('[PDF] Android: Trying FileSystem fallback');
-      const logoAsset = Asset.fromModule(require('../assets/images/engo.png'));
-      await logoAsset.downloadAsync();
-
-      if (logoAsset.localUri) {
-        const base64 = await withTimeout(
-          FileSystem.readAsStringAsync(logoAsset.localUri, {
-            encoding: FileSystem.EncodingType.Base64,
+        const result = await withTimeout(
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const res = reader.result as string;
+              if (res && res.length > 100) resolve(res);
+              else reject(new Error(`FileReader result too short: ${res?.length || 0}`));
+            };
+            reader.onerror = () => reject(new Error('FileReader error'));
+            reader.readAsDataURL(blob);
           }),
-          5000,
-          'FileSystem read timed out',
+          3000,
+          'FileReader timed out',
         );
-
-        if (base64 && base64.length > 50) {
-          const fullBase64 = `data:image/png;base64,${base64}`;
-          console.log('[PDF] Android: Logo loaded via FileSystem fallback');
-          return {
-            logo: fullBase64,
-            watermark: fullBase64,
-            status: '',
-          };
-        } else {
-          errorMessage += ' | FileSystem: base64 was empty or too short';
-        }
-      } else {
-        errorMessage += ' | FileSystem: localUri was null';
+        _cachedLogoBase64 = result;
+        console.log('[PDF] ✅ Method 3 success — logo loaded via fetch/FileReader');
+        return { logo: _cachedLogoBase64, watermark: _cachedLogoBase64, status: '' };
       }
-    } catch (fileError: any) {
-      errorMessage += ` | FileSystem failed: ${fileError?.message || 'Unknown error'}`;
+      errors.push(`Method 3: HTTP ${response.status}`);
+    } catch (e: any) {
+      errors.push(`Method 3: ${e?.message}`);
+      console.warn('[PDF] Method 3 failed:', e?.message);
     }
   }
 
-  // If we reach here, all methods failed - return SVG fallback
-  console.warn('[PDF] All logo loading methods failed:', errorMessage);
+  return _fallbackResult(errors);
+};
+
+const _fallbackResult = (errors: string[]) => {
+  const errorStr = errors.join(' | ');
+  console.warn('[PDF] ⚠️ All logo methods failed:', errorStr);
   return {
     logo: createFallbackSVG(),
     watermark: createFallbackSVG(),
-    status: `logo failed to load: ${errorMessage}`,
+    status: `Logo failed: ${errorStr}`,
   };
 };
 

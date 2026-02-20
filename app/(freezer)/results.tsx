@@ -140,7 +140,7 @@ export default function FreezerResultsTab() {
               { label: 'Air Change Load', value: (results.airChangeLoad || 0).toFixed(1), unit: 'kW' },
               { label: 'Equipment Load', value: (results.equipmentLoad || 0).toFixed(1), unit: 'kW' },
               { label: 'Lighting Load', value: (results.lightLoad || 0).toFixed(1), unit: 'kW' },
-              { label: 'Heater Load', value: ((results.doorHeaterLoad || 0) / (24 * 3600)).toFixed(1), unit: 'kW' },
+              { label: 'Heater Load', value: (results.doorHeaterLoad || 0).toFixed(1), unit: 'kW' },
               { label: 'Occupancy Load', value: (results.occupancyLoad || 0).toFixed(1), unit: 'kW' },
               { label: 'Total Miscellaneous Load', value: (results.totalMiscLoad || 0).toFixed(1), unit: 'kW' },
             ]
@@ -404,7 +404,7 @@ export default function FreezerResultsTab() {
             <ResultCard title="Air Change Load" value={results.airChangeLoad} unit="kW" />
             <ResultCard title="Equipment Load" value={results.equipmentLoad} unit="kW" />
             <ResultCard title="Lighting Load" value={results.lightLoad} unit="kW" />
-            <ResultCard title="Heater Load" value={(results.doorHeaterLoad || 0) / (24 * 3600)} unit="kW" />
+            <ResultCard title="Heater Load" value={results.doorHeaterLoad || 0} unit="kW" />
             <ResultCard title="Occupancy Load" value={results.occupancyLoad} unit="kW" />
             <ResultCard
               title="Total Miscellaneous Load"

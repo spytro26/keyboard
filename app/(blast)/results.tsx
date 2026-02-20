@@ -113,36 +113,36 @@ export default function BlastResultsTab() {
                     {
                         title: 'Transmission Loads',
                         items: [
-                            { label: 'Wall Load', value: ((results.wallLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Ceiling Load', value: ((results.ceilingLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Floor Load', value: ((results.floorLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Total Transmission Load', value: ((results.totalTransmissionLoad || 0) / 1000).toFixed(1), unit: 'kW' },
+                            { label: 'Wall Load', value: ((results.wallLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Ceiling Load', value: ((results.ceilingLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Floor Load', value: ((results.floorLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Total Transmission Load', value: ((results.totalTransmissionLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
                         ]
                     },
                     {
                         title: 'Product Loads',
                         items: [
-                            { label: 'Before Freezing Load', value: ((results.beforeFreezingLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Latent Heat Load', value: ((results.latentHeatLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'After Freezing Load', value: ((results.afterFreezingLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Total Product Load', value: ((results.totalProductLoad || 0) / 1000).toFixed(1), unit: 'kW' },
+                            { label: 'Before Freezing Load', value: ((results.beforeFreezingLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Latent Heat Load', value: ((results.latentHeatLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'After Freezing Load', value: ((results.afterFreezingLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Total Product Load', value: ((results.totalProductLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
                         ]
                     },
                     {
                         title: 'Other Loads',
                         items: [
-                            { label: 'Air Change Load', value: ((results.airChangeLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Equipment Load', value: ((results.equipmentLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Occupancy Load', value: ((results.occupancyLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Light Load', value: ((results.lightLoad || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Total Miscellaneous Load', value: ((results.totalMiscLoad || 0) / 1000).toFixed(1), unit: 'kW' },
+                            { label: 'Air Change Load', value: ((results.airChangeLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Equipment Load', value: ((results.equipmentLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Occupancy Load', value: ((results.occupancyLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Light Load', value: ((results.lightLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Total Miscellaneous Load', value: ((results.totalMiscLoad || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
                         ]
                     },
                     {
                         title: 'Heat Distribution',
                         items: [
-                            { label: 'Sensible Heat', value: ((results.sensibleHeatKJ24Hr || 0) / 1000).toFixed(1), unit: 'kW' },
-                            { label: 'Latent Heat', value: ((results.latentHeatKJ24Hr || 0) / 1000).toFixed(1), unit: 'kW' },
+                            { label: 'Sensible Heat', value: ((results.sensibleHeatKJ24Hr || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
+                            { label: 'Latent Heat', value: ((results.latentHeatKJ24Hr || 0) / (3600 * (productData.batchHours || 8))).toFixed(1), unit: 'kW' },
                             { label: 'Sensible Heat Ratio', value: (results.shr || 0).toFixed(3), unit: '' },
                             { label: 'Air Qty Required', value: (results.airQtyRequiredCfm || 0).toFixed(0), unit: 'CFM' },
                         ]
@@ -358,12 +358,12 @@ export default function BlastResultsTab() {
 
                     {/* Transmission Loads */}
                     <SectionCard title="Transmission Loads">
-                        <ResultCard title="Wall Load" value={results.wallLoad / 1000} unit="kW" />
-                        <ResultCard title="Ceiling Load" value={results.ceilingLoad / 1000} unit="kW" />
-                        <ResultCard title="Floor Load" value={results.floorLoad / 1000} unit="kW" />
+                        <ResultCard title="Wall Load" value={results.wallLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Ceiling Load" value={results.ceilingLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Floor Load" value={results.floorLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
                         <ResultCard
                             title="Total Transmission Load"
-                            value={results.totalTransmissionLoad / 1000}
+                            value={results.totalTransmissionLoad / (3600 * (productData.batchHours || 8))}
                             unit="kW"
                         />
                     </SectionCard>
@@ -372,22 +372,22 @@ export default function BlastResultsTab() {
                     <SectionCard title="Product Loads">
                         <ResultCard
                             title="Before Freezing Load"
-                            value={results.beforeFreezingLoad / 1000}
+                            value={results.beforeFreezingLoad / (3600 * (productData.batchHours || 8))}
                             unit="kW"
                         />
                         <ResultCard
                             title="Latent Heat Load"
-                            value={results.latentHeatLoad / 1000}
+                            value={results.latentHeatLoad / (3600 * (productData.batchHours || 8))}
                             unit="kW"
                         />
                         <ResultCard
                             title="After Freezing Load"
-                            value={results.afterFreezingLoad / 1000}
+                            value={results.afterFreezingLoad / (3600 * (productData.batchHours || 8))}
                             unit="kW"
                         />
                         <ResultCard
                             title="Total Product Load"
-                            value={results.totalProductLoad / 1000}
+                            value={results.totalProductLoad / (3600 * (productData.batchHours || 8))}
                             unit="kW"
                         />
                     </SectionCard>
@@ -396,31 +396,31 @@ export default function BlastResultsTab() {
                     <SectionCard title="Air Change Load">
                         <ResultCard
                             title="Air Change Load"
-                            value={results.airChangeLoad / 1000}
+                            value={results.airChangeLoad / (3600 * (productData.batchHours || 8))}
                             unit="kW"
                         />
                     </SectionCard>
 
                     {/* Miscellaneous Loads */}
                     <SectionCard title="Miscellaneous Loads">
-                        <ResultCard title="Equipment Load" value={results.equipmentLoad / 1000} unit="kW" />
-                        <ResultCard title="Occupancy Load" value={results.occupancyLoad / 1000} unit="kW" />
-                        <ResultCard title="Light Load" value={results.lightLoad / 1000} unit="kW" />
-                        <ResultCard title="Peripheral Heater Load" value={results.peripheralHeaterLoad / 1000} unit="kW" />
-                        <ResultCard title="Door Heater Load" value={results.doorHeaterLoad / 1000} unit="kW" />
-                        <ResultCard title="Tray Heater Load" value={results.trayHeaterLoad / 1000} unit="kW" />
-                        <ResultCard title="Drain Heater Load" value={results.drainHeaterLoad / 1000} unit="kW" />
+                        <ResultCard title="Equipment Load" value={results.equipmentLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Occupancy Load" value={results.occupancyLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Light Load" value={results.lightLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Peripheral Heater Load" value={results.peripheralHeaterLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Door Heater Load" value={results.doorHeaterLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Tray Heater Load" value={results.trayHeaterLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Drain Heater Load" value={results.drainHeaterLoad / (3600 * (productData.batchHours || 8))} unit="kW" />
                         <ResultCard
                             title="Total Miscellaneous Load"
-                            value={results.totalMiscLoad / 1000}
+                            value={results.totalMiscLoad / (3600 * (productData.batchHours || 8))}
                             unit="kW"
                         />
                     </SectionCard>
 
                     {/* Heat Distribution */}
                     <SectionCard title="Heat Distribution">
-                        <ResultCard title="Sensible Heat" value={results.sensibleHeatKJ24Hr / 1000} unit="kW" />
-                        <ResultCard title="Latent Heat" value={results.latentHeatKJ24Hr / 1000} unit="kW" />
+                        <ResultCard title="Sensible Heat" value={results.sensibleHeatKJ24Hr / (3600 * (productData.batchHours || 8))} unit="kW" />
+                        <ResultCard title="Latent Heat" value={results.latentHeatKJ24Hr / (3600 * (productData.batchHours || 8))} unit="kW" />
                         <ResultCard title="SHR (Sensible Heat Ratio)" value={results.shr} unit="" />
                         <ResultCard title="Air Quantity Required" value={results.airQtyRequiredCfm} unit="CFM" />
                     </SectionCard>

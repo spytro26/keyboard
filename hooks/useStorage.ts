@@ -26,7 +26,7 @@ const defaultProductData: ProductData = {
   massBeforeFreezing: 4000, // Excel shows 4000 kg
   massUnit: 'kg',
   cpAboveFreezing: 4.1, // Excel shows 4.1 kJ/kg·K
-  pullDownHours: 24, // Excel shows 24 hrs
+  pullDownHours: 8, // Realistic pull-down time (8 hrs)
   respirationMass: 4000, // Excel shows 4000 kg (same as mass)
   watts: 50, // Excel shows 50 W/Tonne
 };
@@ -125,7 +125,7 @@ export const useStorage = () => {
       }
       console.log(
         '🛰️ useStorage synced from localStorage on global update:',
-        updateCount
+        updateCount,
       );
     } catch (error) {
       console.log('Error syncing data after global update:', error);

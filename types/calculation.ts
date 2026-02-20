@@ -39,6 +39,7 @@ export interface ProductData {
   cpAboveFreezing: number;
   cpBelowFreezing?: number; // Optional for products that may freeze
   freezingPoint?: number; // Optional freezing point
+  latentHeatOfFusion?: number; // Optional latent heat of freezing (kJ/kg)
   pullDownHours: number;
 
   // Respiration

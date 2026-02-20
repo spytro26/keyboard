@@ -45,7 +45,7 @@ const defaultProductData: ProductData = {
     tempUnit: 'C',            // Default temperature unit
 
     cpAboveFreezing: 4.1,     // Excel shows 4.1 kJ/kg·K
-    pullDownHours: 24,        // Excel shows 24 hrs
+    pullDownHours: 8,         // Realistic pull-down time (8 hrs)
     respirationMass: 4000,    // Excel shows 4000 kg (will be adjusted by dailyLoadingPercent)
     watts: 50,                // Excel shows 50 W/Tonne
     productName: 'Custom',
